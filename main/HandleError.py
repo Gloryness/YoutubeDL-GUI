@@ -17,6 +17,7 @@ class HandleErrors(object):
                 or self.destination.startswith("U:/") or self.destination.startswith("U:\\")
                 or self.destination.startswith("S:/") or self.destination.startswith("S:\\")
                 or self.destination.startswith("W:/") or self.destination.startswith("W:\\")
+                # You may add as many valid directory's as you want.
                 ):
 
                     print(self.color('1;38;2;255;107;104') + "Invalid destination!")
