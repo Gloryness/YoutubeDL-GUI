@@ -168,7 +168,7 @@ class Updates(object):
 
         elif quality_btn_var.get() == "NONE" \
             and audio_btn_var.get() != "NONE":
-                video_ops.update(merge_output_format='{}'.format(ext_btn_var.get().lower()))
+                video_ops.update(ext='{}'.format(ext_btn_var.get().lower()), merge_output_format='{}'.format(ext_btn_var.get().lower()))
 
         elif audio_btn_var.get() == "NONE" \
             and quality_btn_var.get() != "NONE":
