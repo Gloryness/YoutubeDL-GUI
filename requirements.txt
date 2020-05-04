@@ -1,1 +1,2 @@
 youtube-dl=2020.3.24
+colorama=0.4.3
