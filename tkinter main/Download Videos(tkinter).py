@@ -3,8 +3,8 @@ from tkinter import *
 from tkinter import messagebox, filedialog
 import youtube_dl as yt
 import colorama
-
-# REMINDER ---- __func__
+import math
+import ffmpeg
 
 root = Tk()
 root.title("Download Videos via Python by Gloryness")
@@ -116,10 +116,16 @@ class Updates(object):
             pass
 
         else:
-            index = len(quality_btn_var.get()) - 1
-            video_ops.update(format='bestvideo[height<={}]'.format(quality_btn_var.get()[0:index]))
-            cls._format = video_ops.get('format')
-            print(cls._format, end="\n\n")
+            if quality_btn_var.get() == "1080p":
+                index = len(quality_btn_var.get()) - 1
+                width = quality_btn_var.get()[0:index]
+                video_ops.update(format='bestvideo[height>={},width>={}]'.format(quality_btn_var.get()[0:index], math.ceil(float(width)*1.777777777777777)))
+                cls._format = video_ops.get('format')
+            else:
+                index = len(quality_btn_var.get()) - 1
+                width = quality_btn_var.get()[0:index]
+                video_ops.update(format='bestvideo[height<={},width<={}]'.format(quality_btn_var.get()[0:index], math.ceil(float(width)*1.777777777777777)))
+                cls._format = video_ops.get('format')
         print(video_ops, "VIDEO", sep="   ", end="\n\n")
 
     @classmethod
@@ -131,9 +137,8 @@ class Updates(object):
         elif quality_btn_var.get() == "NONE":
             index = len(audio_btn_var.get()) - 1
             video_ops.update(zip(['format', 'extractaudio', 'audioformat'],
-                                 ['bestaudio/best[height<={}]'.format(audio_btn_var.get()[0:index]), True, ext_btn_var.get().lower()]))
+                                 ['bestaudio/best[abr<={}]'.format(audio_btn_var.get()[0:index]), True, ext_btn_var.get().lower()]))
             cls._format = video_ops.get('format')
-            print(cls._format, end="\n\n")
         print(video_ops, "AUDIO", sep="   ",  end="\n\n")
 
     @classmethod
@@ -142,13 +147,12 @@ class Updates(object):
         if quality_btn_var.get() != "NONE" \
             and audio_btn_var.get() != "NONE":
                 index = len(audio_btn_var.get()) - 1
-                video_ops.update(format=cls._format+'+bestaudio/best[height<={}]'.format(audio_btn_var.get()[0:index]))
+                video_ops.update(format=cls._format+'+bestaudio/best[abr<={}]'.format(audio_btn_var.get()[0:index]))
                 cls._format = video_ops.get('format')
-                print(cls._format, end="\n\n")
 
         elif audio_btn_var.get() == "NONE" \
             and quality_btn_var.get() != "NONE":
-                video_ops.update(format=cls._format+'+bestaudio/best[height<=360]')
+                video_ops.update(format=cls._format+'+bestaudio/best[abr<=360]')
 
         elif audio_btn_var.get() != "NONE" \
             and quality_btn_var.get() == "NONE":
@@ -188,14 +192,15 @@ class Updates(object):
         file_options_btn.configure(state=ACTIVE)
         download_options_btn.configure(state=ACTIVE)
         other_options_btn.configure(state=ACTIVE)
-        second_done_btn.configure(state=ACTIVE, bd=2)
+        download_btn.configure(state=ACTIVE, bd=2)
+        url_box.configure(state=NORMAL, bd=4)
 
     @staticmethod
     def disable_options():
         file_options_btn.configure(state=DISABLED)
         download_options_btn.configure(state=DISABLED)
         other_options_btn.configure(state=DISABLED)
-        second_done_btn.configure(state=DISABLED, bd=1)
+        download_btn.configure(state=DISABLED, bd=1)
 
 
 do = Updates()
@@ -373,64 +378,105 @@ other_options_label.place(x=380, y=221)
 other_options_btn = Button(root, text="Click Me", state=DISABLED, command=option.other_options_window)
 other_options_btn.place(x=400, y=248, width=90)
 
-def done():
-    with yt.YoutubeDL(video_ops) as ydl:
-        try:
-            if ext_btn_var.get() == "WAV":
-                raise yt.utils.DownloadError("<<<<<<<<<<<<<<>>>>>>>>>>>>>")
-            ydl.download(['https://www.youtube.com/watch?v=LOQe63mBxWc'])
-        except yt.utils.DownloadError:
-            print(colorama.Fore.RED + "Sorry, but we could not download the requested format {}!\nThe video will be merged into a more suitable format instead."
-                  .format(ext_btn_var.get().lower()) + colorama.Fore.RESET)
+class DownloadConversion(object):
 
-            if quality_btn_var.get() != "NONE" \
-                and audio_btn_var.get() != "NONE":
-                    video_ops.update(merge_output_format='mkv', outtmpl=destination_var.get() + '/%(title)s.%(ext)s')
-                    with yt.YoutubeDL(video_ops) as ytd:
-                        ytd.download(['https://www.youtube.com/watch?v=LOQe63mBxWc'])
+    _url = 'https://www.youtube.com/watch?v=n654acZQeAQ'
+    _downloadError = yt.utils.DownloadError
+    _FFmpegPostProcessorError = yt.postprocessor.ffmpeg.FFmpegPostProcessorError
 
-            elif quality_btn_var.get() == "NONE" \
-                and audio_btn_var.get() != "NONE":
-                    if ext_btn_var.get() == ext_btn_options[1]:
-                        video_ops.update(postprocessors=[{
-                            "key": 'FFmpegExtractAudio',
-                            "preferredcodec": 'mp3'
-                            }], outtmpl=destination_var.get() + '/%(title)s.%(ext)s')
+    @classmethod
+    def download(cls):
+        with yt.YoutubeDL(video_ops) as ydl:
+            try:
+                if ext_btn_var.get() == "WAV":
+                    raise cls._downloadError("without this, will cause a bug - unknown why.")
+                ydl.download([cls._url])
+
+            except cls._downloadError or cls._FFmpegPostProcessorError:
+
+                print(colorama.Fore.RED + "Sorry, but we could not download the requested format {}!\nThe video will be merged into a more suitable format instead. Such as MKV."
+                      .format(ext_btn_var.get().lower()) + colorama.Fore.RESET)
+
+                if quality_btn_var.get() != "NONE" \
+                    and audio_btn_var.get() != "NONE":
+                        video_ops.update(merge_output_format='mkv', outtmpl=destination_var.get() + '/%(title)s.%(ext)s', ext='{}'.format(ext_btn_var.get().lower()))
                         with yt.YoutubeDL(video_ops) as ytd:
                             try:
-                                ytd.download(['https://www.youtube.com/watch?v=LOQe63mBxWc'])
-                            except yt.utils.DownloadError:
-                                video_ops.update(postprocessors=[{
-                                    "key": 'FFmpegExtractAudio',
-                                    "preferredcodec": 'wav'
-                                }], outtmpl=destination_var.get() + '/%(title)s.%(ext)s.%(id)s)')
+                                ytd.download([cls._url])
+                            except cls._downloadError or cls._FFmpegPostProcessorError:
+                                video_ops.pop('merge_output_format')
+                                video_ops.update(nooverwrites=False, ext='{}'.format(ext_btn_var.get().lower()))
                                 with yt.YoutubeDL(video_ops) as ytk:
                                     try:
-                                        ytk.download(['https://www.youtube.com/watch?v=LOQe63mBxWc'])
-                                    except yt.utils.DownloadError:
+                                        ytk.download(['https://www.youtube.com/watch?v=n654acZQeAQ'])
+                                    except cls._downloadError or cls._FFmpegPostProcessorError:
                                         pass
 
-                    elif ext_btn_var.get() == ext_btn_options[4]:
-                        video_ops.update(postprocessors=[{
-                            "key": 'FFmpegExtractAudio',
-                            "preferredcodec": 'wav'
-                        }], outtmpl=destination_var.get() + '/%(title)s.%(ext)s')
+                elif quality_btn_var.get() == "NONE" \
+                    and audio_btn_var.get() != "NONE":
+                        if ext_btn_var.get() == ext_btn_options[1]:
+                            video_ops.update(postprocessors=[{
+                                "key": 'FFmpegExtractAudio',
+                                "preferredcodec": 'mp3'
+                                }], outtmpl=destination_var.get() + '/%(title)s.%(ext)s', ext='{}'.format(ext_btn_var.get().lower()))
+                            with yt.YoutubeDL(video_ops) as ytd:
+                                try:
+                                    ytd.download([cls._url])
+                                except cls._downloadError or cls._FFmpegPostProcessorError:
+                                    video_ops.update(postprocessors=[{
+                                        "key": 'FFmpegExtractAudio',
+                                        "preferredcodec": 'wav'
+                                    }], nooverwrites=False, ext='{}'.format(ext_btn_var.get().lower()))
+                                    with yt.YoutubeDL(video_ops) as ytk:
+                                        try:
+                                            ytk.download([cls._url])
+                                        except cls._downloadError or cls._FFmpegPostProcessorError:
+                                            pass
+
+                        elif ext_btn_var.get() == ext_btn_options[4]:
+                            video_ops.update(postprocessors=[{
+                                "key": 'FFmpegExtractAudio',
+                                "preferredcodec": 'wav'
+                            }], outtmpl=destination_var.get() + '/%(title)s.%(ext)s', ext='{}'.format(ext_btn_var.get().lower()))
+                            with yt.YoutubeDL(video_ops) as ytd:
+                                try:
+                                    ytd.download([cls._url])
+                                except cls._downloadError or cls._FFmpegPostProcessorError:
+                                    video_ops.update(postprocessors=[{
+                                        "key": 'FFmpegExtractAudio',
+                                        "preferredcodec": 'mp3'
+                                    }], nooverwrites=False, ext='{}'.format(ext_btn_var.get().lower()))
+                                    with yt.YoutubeDL(video_ops) as ytk:
+                                        try:
+                                            ytk.download([cls._url])
+                                        except cls._downloadError or cls._FFmpegPostProcessorError:
+                                            pass
+
+                elif audio_btn_var.get() == "NONE" \
+                    and quality_btn_var.get() != "NONE":
+                        video_ops.update(merge_output_format='mkv', outtmpl=destination_var.get() + '/%(title)s.%(ext)s', ext='{}'.format(ext_btn_var.get().lower()))
                         with yt.YoutubeDL(video_ops) as ytd:
                             try:
-                                ytd.download(['https://www.youtube.com/watch?v=LOQe63mBxWc'])
-                            except yt.utils.DownloadError:
-                                video_ops.update(postprocessors=[{
-                                    "key": 'FFmpegExtractAudio',
-                                    "preferredcodec": 'mp3'
-                                }], outtmpl=destination_var.get() + '/%(title)s.%(ext)s.%(id)s)')
+                                ytd.download(['https://www.youtube.com/watch?v=n654acZQeAQ'])
+                            except cls._downloadError or cls._FFmpegPostProcessorError:
+                                video_ops.pop('merge_output_format')
+                                video_ops.update(nooverwrites=False, ext='{}'.format(ext_btn_var.get().lower()))
                                 with yt.YoutubeDL(video_ops) as ytk:
                                     try:
-                                        ytk.download(['https://www.youtube.com/watch?v=LOQe63mBxWc'])
-                                    except yt.utils.DownloadError:
+                                        ytk.download(['https://www.youtube.com/watch?v=n654acZQeAQ'])
+                                    except cls._downloadError or cls._FFmpegPostProcessorError:
                                         pass
 
-second_done_btn = Button(root, text="Done", bd=1, relief=SOLID, padx=25, state=DISABLED, command=done)
-second_done_btn.place(x=220, y=314)
+download_call = DownloadConversion()
+
+download_btn = Button(root, text="Download", bd=1, relief=SOLID, padx=20, state=DISABLED, command=download_call.download)
+download_btn.place(x=435, y=410)
+
+info = Label(root, text="Please Enter URLS (new line each)", bg='#cbdbfc', font='Cooper 10')
+info.place(x=165, y=312)
+
+url_box = Text(root, height=6, width=52, bd=2, state=DISABLED)
+url_box.place(x=5, y=334)
 
 ## Videos
 video_ops = {
