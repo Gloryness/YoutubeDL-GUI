@@ -1,13 +1,19 @@
 from __future__ import unicode_literals
+
 from tkinter import *
 from tkinter import messagebox, filedialog, scrolledtext
+
+from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
 import youtube_dl as yt
-import colorama
+
+import colorama # optional but is recommended
 import math
 import time
 import subprocess
+import os
 
-# REMINDER ---- __func__
+PATH = 'C:/Users/Gloryness/geckodriver.exe' # changeable
 
 root = Tk()
 root.title("Download Videos via Python by Gloryness")
@@ -200,6 +206,10 @@ class Updates(object):
         print(video_ops, "EXT", sep="   ", end="\n\n")
 
     @staticmethod
+    def clear_url_box():
+        url_box.delete("0.0", END)
+
+    @staticmethod
     def update_format_btns():
         done_btn.configure(state=DISABLED, bd=1)
         quality_btn.configure(state=DISABLED)
@@ -223,9 +233,11 @@ class Updates(object):
         file_options_btn.configure(state=ACTIVE)
         download_options_btn.configure(state=ACTIVE)
         other_options_btn.configure(state=ACTIVE)
+        detect_btn.configure(state=ACTIVE, bd=2)
         download_btn.configure(state=ACTIVE, bd=2)
         edit_format.configure(state=ACTIVE, bd=2)
         url_box.configure(state=NORMAL, bd=4)
+        clear_btn.configure(state=ACTIVE, bd=1)
 
     @staticmethod
     def disable_options():
@@ -233,6 +245,8 @@ class Updates(object):
         download_options_btn.configure(state=DISABLED)
         other_options_btn.configure(state=DISABLED)
         url_box.configure(state=DISABLED, bd=2)
+        clear_btn.configure(state=DISABLED, bd=1)
+        detect_btn.configure(state=DISABLED, bd=1)
         edit_format.configure(state=DISABLED, bd=1)
         download_btn.configure(state=DISABLED, bd=1)
 
@@ -431,6 +445,10 @@ url_box.place(x=5, y=340)
 
 class DownloadConversion(object):
 
+    def __init__(self):
+        self._index = 0
+        self._driver = None
+
     _downloadError = yt.utils.DownloadError
     _FFmpegPostProcessorError = yt.postprocessor.ffmpeg.FFmpegPostProcessorError
 
@@ -443,14 +461,19 @@ class DownloadConversion(object):
         print(_url)
         with yt.YoutubeDL(video_ops) as ydl:
             try:
-                if ext_btn_var.get() == "WAV":
-                    raise cls._downloadError("without this, will cause a bug - unknown why.")
 
                 if len(_url) < 1:
                     print(colorama.Fore.RED + "You must enter a URL" + colorama.Fore.RESET)
+                    url_box.delete("1.0", END)
+                    url_box.insert("1.0", "You must enter a URL")
 
-                elif not _url[0].startswith('https://www.'):
+                elif not _url[0].startswith('https://'):
                     print(colorama.Fore.RED + "You must enter a VALID URL" + colorama.Fore.RESET)
+                    url_box.delete("1.0", END)
+                    url_box.insert("1.0", "You must enter a VALID URL")
+
+                elif ext_btn_var.get() == "WAV":
+                    raise cls._downloadError("without this, will cause a bug - unknown why.")
 
                 elif len(_url) == 1:
                     if quality_btn_var.get() != "NONE" \
@@ -460,6 +483,7 @@ class DownloadConversion(object):
                             time.sleep(1)
                             subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + extract['title'] + '".' + ext_btn_var.get().lower() + ' -an -y -preset fast "'
                                             + destination_var.get() + '/' + extract['title'] + 'V2"' + '.' + ext_btn_var.get().lower(), shell=False)
+                            os.remove(destination_var.get() + '/' + extract['title'] + '.' + extract['ext'])
 
                     else:
                         ydl.download([_url[0]])
@@ -474,6 +498,7 @@ class DownloadConversion(object):
                             subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + extract['title'] + '".' + ext_btn_var.get().lower() + ' -an -y -preset fast "'
                                             + destination_var.get() + '/' + extract['title'] + 'V2"' + '.' + ext_btn_var.get().lower(), shell=False)
                             _url.pop(index)
+                            os.remove(destination_var.get() + '/' + extract['title'] + '.' + extract['ext'])
                     else:
                         index = 0
                         for i in range(len(list(_url))):
@@ -508,8 +533,8 @@ class DownloadConversion(object):
                                             for i in range(len(list(_url))):
                                                 ytd.download([_url[index]])
                                                 _url.pop(index)
-                                    except cls._downloadError or cls._FFmpegPostProcessorError:
-                                        pass
+                                    except Exception as exc:
+                                        print(colorama.Fore.RED + "There was an error: %s" % exc + colorama.Fore.RESET)
 
                                     finally:
                                         print(colorama.Fore.GREEN + "Download COMPLETE!" + colorama.Fore.RESET)
@@ -544,8 +569,8 @@ class DownloadConversion(object):
                                                 for i in range(len(list(_url))):
                                                     ytk.download([_url[index]])
                                                     _url.pop(index)
-                                        except cls._downloadError or cls._FFmpegPostProcessorError:
-                                            pass
+                                        except Exception as exc:
+                                            print(colorama.Fore.RED + "There was an error: %s" % exc + colorama.Fore.RESET)
 
                                         finally:
                                             print(colorama.Fore.GREEN + "Download COMPLETE!" + colorama.Fore.RESET)
@@ -578,8 +603,8 @@ class DownloadConversion(object):
                                                 for i in range(len(list(_url))):
                                                     ytk.download([_url[index]])
                                                     _url.pop(index)
-                                        except cls._downloadError or cls._FFmpegPostProcessorError:
-                                            pass
+                                        except Exception as exc:
+                                            print(colorama.Fore.RED + "There was an error: %s" % exc + colorama.Fore.RESET)
 
                                         finally:
                                             print(colorama.Fore.GREEN + "Download COMPLETE!" + colorama.Fore.RESET)
@@ -597,7 +622,8 @@ class DownloadConversion(object):
                                     time.sleep(1)
                                     subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + extract1['title'] + '".mkv'
                                                     + ' -an -y -preset fast "'
-                                        + destination_var.get() + '/' + extract1['title'] + 'V2"' + '.mkv', shell=False)
+                                                    + destination_var.get() + '/' + extract1['title'] + 'V2"' + '.mkv', shell=False)
+                                    os.remove(destination_var.get() + '/' + extract1['title'] + '.mkv')
                                 if len(_url) > 1:
                                     for i in range(len(list(_url))):
                                         ytd.download([_url[index]])
@@ -607,6 +633,7 @@ class DownloadConversion(object):
                                                         + ' -an -y -preset fast "'
                                                         + destination_var.get() + '/' + extract2['title'] + 'V2"' + '.mkv', shell=False)
                                         _url.pop(index)
+                                        os.remove(destination_var.get() + '/' + extract2['title'] + '.mkv')
 
                             except cls._downloadError or cls._FFmpegPostProcessorError:
                                 video_ops.pop('merge_output_format')
@@ -622,6 +649,7 @@ class DownloadConversion(object):
                                             subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + extract4['title'] + '.' + extract4['ext']
                                                             + '" -an -y -preset fast "'
                                                             + destination_var.get() + '/' + extract4['title'] + 'V2"' + '.' + extract4['ext'], shell=False)
+                                            os.remove(destination_var.get() + '/' + extract4['title'] + '.' + extract4['ext'])
                                         if len(_url) > 1:
                                             for i in range(len(list(_url))):
                                                 ytk.download([_url[index]])
@@ -632,8 +660,10 @@ class DownloadConversion(object):
                                                     + '" -an -y -preset fast "'
                                                     + destination_var.get() + '/' + extract3['title'] + 'V2"' + '.' + extract3['ext'], shell=False)
                                                 _url.pop(index)
-                                    except cls._downloadError or cls._FFmpegPostProcessorError:
-                                        pass
+                                                os.remove(destination_var.get() + '/' + extract3['title'] + '.' + extract3['ext']) # Delete the orignal file w/ sound
+
+                                    except Exception as exc:
+                                        print(colorama.Fore.RED + "There was an error: %s" % exc + colorama.Fore.RESET)
 
                                     finally:
                                         print(colorama.Fore.GREEN + "Download COMPLETE!" + colorama.Fore.RESET)
@@ -643,6 +673,45 @@ class DownloadConversion(object):
                 print(colorama.Fore.GREEN + "Download COMPLETE!" + colorama.Fore.RESET)
 
 
+    def open_selenium(self):
+        confirm = messagebox.askyesnocancel("Execute URLS / Open Selenium", "Would you like to OPEN Selenium / Execute URLS / Cancel"
+                                            "\nYES - Open Browser via Selenium"
+                                            "\nNO - Execute URLS from Selenium"
+                                            "\nCANCEL - Cancel")
+        if confirm is True:
+            self._driver = webdriver.Firefox(executable_path=PATH) # changeable to your own browser
+            self._driver.maximize_window()
+        elif confirm is False:
+            download_call.get_urls()
+        else:
+            pass
+
+
+    def get_urls(self):
+        try:
+            self._index = 0
+            self._driver.switch_to.window(self._driver.window_handles[self._index])
+
+            for i in range(len(self._driver.window_handles)):
+                if str(self._driver.current_url).startswith('https://www.youtube.com/watch?v='):
+                    url_box.insert("1.0", self._driver.current_url + "\n")
+                    self._index += 1
+                try:
+                    self._driver.switch_to.window(self._driver.window_handles[self._index])
+                except IndexError:
+                    pass
+            self._index = 0
+            self._driver.switch_to.window(self._driver.window_handles[self._index])
+        except AttributeError:
+            url_box.delete("1.0", END)
+            url_box.insert("1.0", "Selenium is not open, therefore no URLS detected.")
+        except WebDriverException:
+            url_box.delete("1.0", END)
+            url_box.insert("1.0", "Selenium is not open, therefore no URLS detected.")
+        except Exception:
+            url_box.delete("1.0", END)
+            url_box.insert("1.0", "Selenium is not open, therefore no URLS detected.")
+
 download_call = DownloadConversion()
 
 download_btn = Button(root, text="Download", bd=1, relief=SOLID, padx=20, state=DISABLED, command=download_call.download)
@@ -650,6 +719,15 @@ download_btn.place(x=435, y=410)
 
 edit_format = Button(root, text="Edit Formats", bd=1, relief=SOLID, padx=14, state=DISABLED, command=do.edit_format_btns)
 edit_format.place(x=435, y=375)
+
+detect_btn = Button(root, text="Detect URLS", bd=1, relief=SOLID, padx=16, state=DISABLED, command=download_call.open_selenium)
+detect_btn.place(x=435, y=340)
+
+clear_btn = Button(root, text="Clear", bd=1, relief=SOLID, padx=20, state=DISABLED, command=do.clear_url_box)
+clear_btn.place(x=8, y=314)
+
+detect_info_label = Label(root, text="(selenium-use-only)", bg='#cbdbfc', font='Cooper 10')
+detect_info_label.place(x=425, y=318)
 
 info = Label(root, text="Please Enter URLS (new line each)", bg='#cbdbfc', font='Cooper 10')
 info.place(x=165, y=312)
