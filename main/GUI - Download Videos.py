@@ -1,6 +1,7 @@
 from __future__ import unicode_literals, print_function
 
 from BorderEntry import BorderedEntry
+from valid_extractors import AllExtractors
 import _tkinter
 from tkinter import *
 from tkinter import messagebox, filedialog, scrolledtext
@@ -23,27 +24,7 @@ import threading
 import logging
 import webbrowser
 
-# with open('new.json', 'w') as d:
-#    d.write('''
-# {
-#    "people": [
-#        {
-#            "name": "John Smith",
-#            "phone": "615-555-7164",
-#            "emails": ["johnsmith@gmail.com", "john.smith@gmail.com"],
-#            "has_license": false
-#        },
-#        {
-#            "name": "Jane Doe",
-#            "phone": "560-555-5153",
-#            "emails": null,
-#            "has_license": true
-#        }
-#    ]
-# }
-#        ''')
-
-__version__ = '0.7.5 BETA'
+__version__ = '0.7.7 BETA'
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -84,6 +65,8 @@ style4.configure('option1.TButton', background='black', width=9)
 style5 = ttk.Style()
 style5.configure('dropdown.TMenubutton')
 
+all_extractors = AllExtractors()
+
 wait_time = 1.75
 
 def discord_join():
@@ -95,6 +78,10 @@ def view_github():
 def donate():
     webbrowser.open('https://streamlabs.com/gloryness/tip')
 
+def settings():
+    setting = SettingsWindow()
+    setting.on_settings()
+
 my_menu = Menu(root)
 root.config(menu=my_menu)
 
@@ -104,7 +91,7 @@ my_menu.add_cascade(label="File", menu=file_menu)
 file_menu.add_command(label="Add Configuration...", command='')
 file_menu.add_command(label="Load Configuration...", command='')
 file_menu.add_command(label="Save Configuration...", command='')
-file_menu.add_command(label="Settings", command='')
+file_menu.add_command(label="Settings", command=settings)
 file_menu.add_separator()
 file_menu.add_command(label="Exit", command=root.quit)
 
@@ -219,6 +206,7 @@ ext_btn_options = [
     "WAV",
     "FLV",
     "M4A",
+    "AVI",
     "OGG"
 ]
 
@@ -263,21 +251,17 @@ class Updates(object):
         """
         Updates the 'format' option with the required height/width
         """
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
         global video_ops
         if quality_btn_var.get() == "NONE":
             pass
 
         else:
-            if quality_btn_var.get() == "1080p":
-                index = len(quality_btn_var.get()) - 1
-                width = quality_btn_var.get()[0:index]
-                video_ops.update(format='bestvideo[height<={},width<={}]'.format(int(quality_btn_var.get()[0:index])+20, math.ceil(float(width)*1.777777777777777)))
-                cls._format = video_ops.get('format')
-            else:
-                index = len(quality_btn_var.get()) - 1
-                width = quality_btn_var.get()[0:index]
-                video_ops.update(format='bestvideo[height<={},width<={}]'.format(quality_btn_var.get()[0:index], math.ceil(float(width)*1.777777777777777)))
-                cls._format = video_ops.get('format')
+            index = len(quality_btn_var.get()) - 1
+            width = quality_btn_var.get()[0:index]
+            video_ops.update(format='bestvideo[height<={},width<={}]'.format(quality_btn_var.get()[0:index], math.ceil(float(width)*1.777777777777777)))
+            cls._format = video_ops.get('format')
         print(video_ops, "VIDEO", sep="   ", end="\n\n")
 
     @classmethod
@@ -285,6 +269,8 @@ class Updates(object):
         """
         Adds onto the 'format' option with audio, only effective if quality is None.
         """
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
         global video_ops
         if audio_btn_var.get() == "NONE":
             video_ops.update(extractaudio=False)
@@ -301,16 +287,14 @@ class Updates(object):
         """
         Handles both of the formats, as well as MP3's and videos without sound.
         """
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
         global video_ops
         if quality_btn_var.get() != "NONE" \
             and audio_btn_var.get() != "NONE":
                 index = len(audio_btn_var.get()) - 1
                 video_ops.update(format=cls._format+'+bestaudio/best[abr<={}]'.format(audio_btn_var.get()[0:index]))
                 cls._format = video_ops.get('format')
-
-        elif audio_btn_var.get() == "NONE" \
-            and quality_btn_var.get() != "NONE":
-                video_ops.update(format=cls._format+'+worstaudio')
 
         elif audio_btn_var.get() != "NONE" \
             and quality_btn_var.get() == "NONE":
@@ -327,10 +311,22 @@ class Updates(object):
         Updates the 'merge_output_format' and 'ext' options, to ensure merge with required format.\n
         If uncompatible, errors will therefore handle it.
         """
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
         global video_ops
         if quality_btn_var.get() != "NONE" \
             and audio_btn_var.get() != "NONE":
                 if ext_btn_var.get() == "3GP":
+                    video_ops.update(ext='{}'.format(ext_btn_var.get().lower()), merge_output_format='mkv')
+                elif ext_btn_var.get() == "MP4":
+                    video_ops.update(ext='{}'.format(ext_btn_var.get().lower()), merge_output_format='mkv')
+                elif ext_btn_var.get() == "OGG":
+                    video_ops.update(ext='{}'.format(ext_btn_var.get().lower()), merge_output_format='mkv')
+                elif ext_btn_var.get() == "WEBM":
+                    video_ops.update(ext='{}'.format(ext_btn_var.get().lower()), merge_output_format='mkv')
+                elif ext_btn_var.get() == "FLV":
+                    video_ops.update(ext='{}'.format(ext_btn_var.get().lower()), merge_output_format='mkv')
+                elif ext_btn_var.get() == "AVI":
                     video_ops.update(ext='{}'.format(ext_btn_var.get().lower()), merge_output_format='mkv')
                 else:
                     video_ops.update(ext='{}'.format(ext_btn_var.get().lower()), merge_output_format='{}'.format(ext_btn_var.get().lower()))
@@ -339,12 +335,24 @@ class Updates(object):
             and audio_btn_var.get() != "NONE":
                 if ext_btn_var.get() == "3GP":
                     video_ops.update(ext='{}'.format(ext_btn_var.get().lower()), merge_output_format='mkv')
+                elif ext_btn_var.get() == "OGG":
+                    video_ops.update(ext='{}'.format(ext_btn_var.get().lower()), merge_output_format='mkv')
                 else:
                     video_ops.update(ext='{}'.format(ext_btn_var.get().lower()), merge_output_format='{}'.format(ext_btn_var.get().lower()))
 
         elif audio_btn_var.get() == "NONE" \
             and quality_btn_var.get() != "NONE":
                 if ext_btn_var.get() == "3GP":
+                    video_ops.update(ext='{}'.format(ext_btn_var.get().lower()), merge_output_format='mkv')
+                elif ext_btn_var.get() == "MP4":
+                    video_ops.update(ext='{}'.format(ext_btn_var.get().lower()), merge_output_format='mkv')
+                elif ext_btn_var.get() == "OGG":
+                    video_ops.update(ext='{}'.format(ext_btn_var.get().lower()), merge_output_format='mkv')
+                elif ext_btn_var.get() == "WEBM":
+                    video_ops.update(ext='{}'.format(ext_btn_var.get().lower()), merge_output_format='mkv')
+                elif ext_btn_var.get() == "FLV":
+                    video_ops.update(ext='{}'.format(ext_btn_var.get().lower()), merge_output_format='mkv')
+                elif ext_btn_var.get() == "AVI":
                     video_ops.update(ext='{}'.format(ext_btn_var.get().lower()), merge_output_format='mkv')
                 else:
                     video_ops.update(ext='{}'.format(ext_btn_var.get().lower()), merge_output_format='{}'.format(ext_btn_var.get().lower()))
@@ -403,7 +411,7 @@ do = Updates()
 
 ###########################################################################
 
-def done_btn():
+def done_btn_func():
     def on_done_btn():
         verify = messagebox.askquestion("Are You Sure?", "This will be your format, are you sure you want to continue?")
         if verify == "yes":
@@ -415,14 +423,16 @@ def done_btn():
             elif quality_btn_var.get() == "NONE" \
                 and audio_btn_var.get() != "NONE" \
                 and ext_btn_var.get() != "MP3" \
-                and ext_btn_var.get() != "WAV":
-                    none_types2 = messagebox.showerror("?????", "If you want an audio-only file, please use an MP3 or WAV extension.")
+                and ext_btn_var.get() != "WAV" \
+                and ext_btn_var.get() != "M4A":
+                    none_types2 = messagebox.showerror("?????", "If you want an audio-only file, please use an MP3 or WAV or M4A extension.")
 
             elif quality_btn_var.get() != "NONE" \
                 and audio_btn_var.get() != "NONE":
                     if ext_btn_var.get() == "MP3" \
-                        or ext_btn_var.get() == "WAV":
-                        none_types3 = messagebox.showerror("?????", f"Sorry, but {ext_btn_var.get()} is not a supported file-type for videos.")
+                        or ext_btn_var.get() == "WAV"\
+                        or ext_btn_var.get() == "M4A":
+                        none_types3 = messagebox.showerror("?????", f"Sorry, but {ext_btn_var.get()} is not a supported file-type for videos.\nWell it could be, but let's act professional here.")
                     else:
                         thread_event = threading.Event()
 
@@ -477,7 +487,7 @@ def done_btn():
     done_btn_thread = threading.Thread(target=on_done_btn)
     done_btn_thread.start()
 
-done_btn = ttk.Button(root, text="Done", style='done.TButton', command=done_btn)
+done_btn = ttk.Button(root, text="Done", style='done.TButton', command=done_btn_func)
 done_btn.place(x=228, y=154)
 
 ###########################################################################
@@ -491,10 +501,14 @@ second_invis_label.grid(row=6, column=0)
 second_format_label = Label(root, text="Options", bg="#cbdbfc", fg="blue")
 second_format_label.place(x=242, y=197)
 
+infinity = 9999999
+max_downloads = infinity
+download_count = 0
 file_count = 1
 download_count = 1
 other_count = 1
-_stabalize = [file_count, download_count, other_count]
+settings_count = 1
+_stabalize = [file_count, download_count, other_count, settings_count]
 test = True
 
 def reset_file_window(win):
@@ -502,6 +516,10 @@ def reset_file_window(win):
     _stabalize[0] = 1
     _stabalize[1] = 1
     _stabalize[2] = 1
+    _stabalize[3] = 1
+    state = str(done_btn['state'])
+    if state == 'disabled':
+        download_btn.configure(state=ACTIVE)
     file_option.hold_variables()
 
 def reset_download_window(win):
@@ -509,6 +527,10 @@ def reset_download_window(win):
     _stabalize[0] = 1
     _stabalize[1] = 1
     _stabalize[2] = 1
+    _stabalize[3] = 1
+    state = str(done_btn['state'])
+    if state == 'disabled':
+        download_btn.configure(state=ACTIVE)
     download_option.hold_variables()
 
 def reset_other_window(win):
@@ -516,8 +538,22 @@ def reset_other_window(win):
     _stabalize[0] = 1
     _stabalize[1] = 1
     _stabalize[2] = 1
-    win.destroy()
+    _stabalize[3] = 1
+    state = str(done_btn['state'])
+    if state == 'disabled':
+        download_btn.configure(state=ACTIVE)
+    other_option.hold_variables()
 
+def reset_settings_window(win):
+    global _stabalize
+    _stabalize[0] = 1
+    _stabalize[1] = 1
+    _stabalize[2] = 1
+    _stabalize[3] = 1
+    state = str(done_btn['state'])
+    if state == 'disabled':
+        download_btn.configure(state=ACTIVE)
+    win.destroy()
 
 class FileOptionWindow(object):
     """
@@ -540,12 +576,26 @@ class FileOptionWindow(object):
         self.remember = 'id'
         self.remember2 = '.'
         self.storage = '%(title)s.%(ext)s'
+        self.backup_length = ['%(title)s', '.%(ext)s']
         self.length = ['%(title)s', '.%(ext)s']
         self.index = 0
+
+        self.isSaved = False
+        self.title_saved = True
 
     def on_file_options(self):
         file_options_thread = threading.Thread(target=self.file_options_window)
         file_options_thread.start()
+
+    def hold_saved_variables(self):
+        if not self.isSaved:
+            if not self.title_saved:
+                self.title_entry.delete(0, END)
+                self.title_var.set(self.storage)
+                self.length = self.backup_length.copy()
+
+        if self.isSaved:
+            pass
 
     def hold_variables(self):
         if len(self.title_var.get()) <= 2:
@@ -557,6 +607,7 @@ class FileOptionWindow(object):
             else:
                 responce = messagebox.askquestion("Are You Sure?", "You have made unsaved changed, are you sure you want to exit?", parent=self.file_win)
                 if responce == 'yes':
+                    self.hold_saved_variables()
                     self.file_win.destroy()
                 else:
                     pass
@@ -564,6 +615,7 @@ class FileOptionWindow(object):
     def file_options_window(self):
         global _stabalize
         if _stabalize[0] == 1:
+            download_btn.configure(state=DISABLED)
             print(self.length)
             self.file_win = Toplevel()
             self.file_win.title(self._title)
@@ -585,9 +637,9 @@ class FileOptionWindow(object):
             self.title_entry = Entry(self.file_win, width=74, state=NORMAL, relief=SOLID, textvariable=self.title_var)
             self.title_entry.place(x=90, y=45)
 
-            if not self.title_var.get().endswith(("%(title)s", "%(id)s", "%(title)s", "%(ext)s", "%(uploader)s", "%(upload_date)s", "%(channel)s", "%(duration)s",
+            if not self.title_var.get().endswith(("%(id)s", "%(title)s", "%(ext)s", "%(uploader)s", "%(upload_date)s", "%(channel)s", "%(duration)s",
                 "%(view_count)s", "%(like_count)s", "%(dislike_count)s", "%(is_live)s", "%(playlist)s", "%(playlist_title)s",
-                    "%(chapter)s", "%(series)s", "season", "%(episode)s", "%(track)s", "%(artist)s", "%(genre)s", "%(album)s")):
+                    "%(chapter)s", "%(series)s", "%(season)s", "%(episode)s", "%(track)s", "%(artist)s", "%(genre)s", "%(album)s")):
                 self.title_entry.insert(0, self.storage)
             else:
                 pass
@@ -733,7 +785,7 @@ class FileOptionWindow(object):
 
 
             index = 0
-            for i in range(3):
+            for i in range(4):
                 _stabalize[index] += 1
                 index += 1
             index = 0
@@ -742,6 +794,8 @@ class FileOptionWindow(object):
             pass
 
     def __add__(self):
+        self.isSaved = False
+        self.title_saved = False
         seperator = self.seperator_var.get()
         if seperator == "Space":
             self.apply_btn.configure(state=ACTIVE)
@@ -764,6 +818,8 @@ class FileOptionWindow(object):
         print(self.length)
 
     def __delete__(self):
+        self.isSaved = False
+        self.title_saved = False
         self.apply_btn.configure(state=ACTIVE)
         try:
             self.index = len(self.length) - 1
@@ -787,9 +843,12 @@ class FileOptionWindow(object):
             self.apply_btn.configure(state=DISABLED)
             video_ops.update(outtmpl=f"{destination_var.get()}/{self.title_var.get()}")
 
+            self.isSaved = True
+            self.title_saved = True
             self.remember = self.title_menu_var.get()
             self.remember2 = self.seperator_var.get()
             self.storage = self.title_var.get()
+            self.backup_length = self.length.copy()
 
             if self.var_1.get():
                 video_ops.update(writedescription=True)
@@ -821,7 +880,7 @@ class FileOptionWindow(object):
                 video_ops.update(write_all_thumbnails=False)
                 video_ops.pop('write_all_thumbnails')
 
-            if self.var_6.get() == "True":
+            if self.var_6.get():
                 video_ops.update(writesubtitles=True)
             else:
                 video_ops.update(writesubtitles=False)
@@ -863,6 +922,8 @@ class FileOptionWindow(object):
             else:
                 video_ops.update(cookiefile=self.var_12.get())
 
+            sys.stderr = sys.__stderr__
+            sys.stdout = sys.__stdout__
             print(video_ops, "FILE OPTIONS", sep="   ", end="\n\n")
 
         else:
@@ -913,8 +974,8 @@ class DownloadOptionWindow(object):
         self.apply_btn.configure(state=ACTIVE)
         self.isSaved = False
 
-    def hold_variables(self):
-        if self.isSaved is False:
+    def hold_saved_variables(self):
+        if not self.isSaved:
             if self.input_entry1_saved is False:
                 self.input_entry1.delete(0, END)
                 self.var_9.set(self.storage1)
@@ -930,22 +991,25 @@ class DownloadOptionWindow(object):
             if self.input_entry4_saved is False:
                 self.input_entry4.delete(0, END)
                 self.var_12.set(self.storage4)
-        if self.isSaved is True:
+        if self.isSaved:
             pass
+
+    def hold_variables(self):
         state = str(self.apply_btn['state'])
         if state == 'disabled':
             self.download_win.destroy()
         else:
             responce = messagebox.askquestion("Are You Sure?", "You have made unsaved changed, are you sure you want to exit?", parent=self.download_win)
             if responce == 'yes':
+                self.hold_saved_variables()
                 self.download_win.destroy()
             else:
                 pass
 
     def download_options_window(self):
         global _stabalize
-        if _stabalize[2] == 1:
-            global download_win
+        if _stabalize[1] == 1:
+            download_btn.configure(state=DISABLED)
             self.download_win = Toplevel()
             self.download_win.title(self._title)
             self.download_win.iconbitmap(self._icon)
@@ -1145,7 +1209,7 @@ class DownloadOptionWindow(object):
             downloader.bind("<Button-1>", handleReturn5)
 
             index = 0
-            for i in range(3):
+            for i in range(4):
                 _stabalize[index] += 1
                 index += 1
             index = 0
@@ -1237,30 +1301,18 @@ class DownloadOptionWindow(object):
                     count10 = letter.count('8')
                     count11 = letter.count('9')
                     count12 = letter.count('0')
-                    if count1 >= 1:
-                        video_ops.update(playlist_items=self.var_9.get())
-                    elif count2 >= 1:
-                        video_ops.update(playlist_items=self.var_9.get())
-
-                    if count3 >= 1:
-                        video_ops.update(playlist_items=self.var_9.get())
-                    elif count4 >= 1:
-                        video_ops.update(playlist_items=self.var_9.get())
-                    elif count5 >= 1:
-                        video_ops.update(playlist_items=self.var_9.get())
-                    elif count6 >= 1:
-                        video_ops.update(playlist_items=self.var_9.get())
-                    elif count7 >= 1:
-                        video_ops.update(playlist_items=self.var_9.get())
-                    elif count8 >= 1:
-                        video_ops.update(playlist_items=self.var_9.get())
-                    elif count9 >= 1:
-                        video_ops.update(playlist_items=self.var_9.get())
-                    elif count10 >= 1:
-                        video_ops.update(playlist_items=self.var_9.get())
-                    elif count11 >= 1:
-                        video_ops.update(playlist_items=self.var_9.get())
-                    elif count12 >= 1:
+                    if count1 >= 1 \
+                            or count2 >= 1\
+                            or count3 >= 1\
+                            or count4 >= 1\
+                            or count5 >= 1\
+                            or count6 >= 1\
+                            or count7 >= 1\
+                            or count8 >= 1\
+                            or count9 >= 1\
+                            or count10 >= 1\
+                            or count11 >= 1\
+                            or count12 >= 1:
                         video_ops.update(playlist_items=self.var_9.get())
                     else:
                         if self.count == 1:
@@ -1268,6 +1320,7 @@ class DownloadOptionWindow(object):
                             self.count += 1
                         video_ops.update(playlist_items=None)
                         video_ops.pop('playlist_items')
+            self.count = 1
 
         if len(self.var_10.get()) <= 1:
             video_ops.update(max_filesize=None)
@@ -1383,6 +1436,8 @@ class DownloadOptionWindow(object):
         self.storage3 = self.input_entry3.get()
         self.storage4 = self.input_entry4.get()
         self.count = 1
+        sys.stderr = sys.__stderr__
+        sys.stdout = sys.__stdout__
         print(video_ops, "DOWNLOAD OPTIONS", sep="   ", end="\n\n")
 
 ###############################################################################################################
@@ -1418,12 +1473,82 @@ class OtherOptionWindow(object):
         self.age_limit_entry = None
         self.min_views_entry = None
         self.max_views_entry = None
-        self.download_buffer_entry = None
+        self.max_downloads_entry = None
         self.time_between_entry = None
+
+        self.isSaved = False
+        self.username_saved = False
+        self.twofactor_saved = False
+        self.password_saved = False
+        self.videopass_saved = False
+        self.age_limit_saved = False
+        self.min_views_saved = False
+        self.max_views_saved = False
+        self.max_download_saved = False
+        self.time_between_saved = True
+
+        self.username_storage = ''
+        self.twofactor_storage = ''
+        self.password_storage = ''
+        self.videopass_storage = ''
+        self.age_limit_storage = ''
+        self.min_views_storage = ''
+        self.max_views_storage = ''
+        self.max_download_storage = ''
+        self.time_between_storage = ''
 
     def on_other_options(self):
         other_options_thread = threading.Thread(target=self.other_options_window)
         other_options_thread.start()
+
+    def hold_saved_variables(self):
+        if not self.isSaved:
+            if not self.username_saved:
+                self.username_entry.configure(state=NORMAL)
+                self.username_entry.delete(0, END)
+                self.var_1.set(self.username_storage)
+                self.username_entry.configure(state=DISABLED)
+
+            if not self.twofactor_saved:
+                self.twofactor_entry.configure(state=NORMAL)
+                self.twofactor_entry.delete(0, END)
+                self.var_2.set(self.twofactor_storage)
+                self.twofactor_entry.configure(state=DISABLED)
+
+            if not self.password_saved:
+                self.password_entry.configure(state=NORMAL)
+                self.password_entry.delete(0, END)
+                self.var_3.set(self.password_storage)
+                self.password_entry.configure(state=DISABLED)
+
+            if not self.videopass_saved:
+                self.videopass_entry.configure(state=NORMAL)
+                self.videopass_entry.delete(0, END)
+                self.var_4.set(self.videopass_storage)
+                self.videopass_entry.configure(state=DISABLED)
+
+            if not self.age_limit_saved:
+                self.age_limit_entry.delete(0, END)
+                self.var_11.set(self.age_limit_storage)
+
+            if not self.min_views_saved:
+                self.min_views_entry.delete(0, END)
+                self.var_12.set(self.min_views_storage)
+
+            if not self.max_views_saved:
+                self.max_views_entry.delete(0, END)
+                self.var_13.set(self.max_views_storage)
+
+            if not self.max_download_saved:
+                self.max_downloads_entry.delete(0, END)
+                self.var_20.set(self.max_download_storage)
+
+            if not self.time_between_saved:
+                self.time_between_entry.delete(0, END)
+                self.var_21.set(self.time_between_storage)
+
+        if self.isSaved:
+            pass
 
     def hold_variables(self):
         state = str(self.apply_btn['state'])
@@ -1432,15 +1557,15 @@ class OtherOptionWindow(object):
         else:
             responce = messagebox.askquestion("Are You Sure?", "You have made unsaved changed, are you sure you want to exit?", parent=self.other_win)
             if responce == 'yes':
+                self.hold_saved_variables()
                 self.other_win.destroy()
             else:
                 pass
 
-
     def other_options_window(self):
-        # Find out how to check if checkbox is selected and then make the entry NORMAL if it is.
         global _stabalize
-        if _stabalize[1] == 1:
+        if _stabalize[2] == 1:
+            download_btn.configure(state=DISABLED)
             self.other_win = Toplevel()
             self.other_win.title(self._title)
             self.other_win.iconbitmap(self._icon)
@@ -1548,10 +1673,6 @@ class OtherOptionWindow(object):
             style1 = ttk.Style()
             style1.configure('t.TCheckbutton', background='#afc2e9', font=(None, 9))
 
-            # 327
-            # 360  --- 33 difference
-            # 393
-
             restrictions = Label(self.other_win, text="Restrictions", font=(None, 14), bg='#afc2e9')
             restrictions.place(x=246, y=168)
 
@@ -1624,14 +1745,14 @@ class OtherOptionWindow(object):
                                                     onvalue=True, offvalue=False, variable=self.var_19, command=update_apply_btn)
             no_check_certificate.place(x=234, y=393)
 
-            download_buffer_label = Label(self.other_win, text="Size of download buffer:", bg='#afc2e9', font=(None, 9))
+            download_buffer_label = Label(self.other_win, text="Max downloads:", bg='#afc2e9', font=(None, 9))
             download_buffer_label.place(x=415, y=312)
 
             time_between_label = Label(self.other_win, text="Time between downloads:\n(secs):", bg='#afc2e9', font=(None, 9))
             time_between_label.place(x=408, y=356)
 
-            self.download_buffer_entry = Entry(self.other_win, width=18, relief=SOLID, state=NORMAL, font=(None, 9), textvariable=self.var_20)
-            self.download_buffer_entry.place(x=418, y=334)
+            self.max_downloads_entry = Entry(self.other_win, width=18, relief=SOLID, state=NORMAL, font=(None, 9), textvariable=self.var_20)
+            self.max_downloads_entry.place(x=418, y=334)
 
             self.time_between_entry = Entry(self.other_win, width=18, relief=SOLID, state=NORMAL, font=(None, 9), textvariable=self.var_21)
             self.time_between_entry.place(x=418, y=390)
@@ -1641,19 +1762,56 @@ class OtherOptionWindow(object):
 
             def handleReturn(event):
                 self.apply_btn.configure(state=ACTIVE)
+                self.isSaved = False
+            def handleReturn1(event):
+                self.apply_btn.configure(state=ACTIVE)
+                self.username_saved = False
+                self.isSaved = False
+            def handleReturn2(event):
+                self.apply_btn.configure(state=ACTIVE)
+                self.twofactor_saved = False
+                self.isSaved = False
+            def handleReturn3(event):
+                self.apply_btn.configure(state=ACTIVE)
+                self.password_saved = False
+                self.isSaved = False
+            def handleReturn4(event):
+                self.apply_btn.configure(state=ACTIVE)
+                self.videopass_saved = False
+                self.isSaved = False
+            def handleReturn5(event):
+                self.apply_btn.configure(state=ACTIVE)
+                self.age_limit_saved = False
+                self.isSaved = False
+            def handleReturn6(event):
+                self.apply_btn.configure(state=ACTIVE)
+                self.min_views_saved = False
+                self.isSaved = False
+            def handleReturn7(event):
+                self.apply_btn.configure(state=ACTIVE)
+                self.max_views_saved = False
+                self.isSaved = False
+            def handleReturn8(event):
+                self.apply_btn.configure(state=ACTIVE)
+                self.max_download_saved = False
+                self.isSaved = False
+            def handleReturn9(event):
+                self.apply_btn.configure(state=ACTIVE)
+                self.time_between_saved = False
+                self.isSaved = False
 
-            self.username_entry.bind("<Key>", handleReturn)
-            self.twofactor_entry.bind("<Key>", handleReturn)
-            self.password_entry.bind("<Key>", handleReturn)
-            self.videopass_entry.bind("<Key>", handleReturn)
-            self.age_limit_entry.bind("<Key>", handleReturn)
-            self.min_views_entry.bind("<Key>", handleReturn)
-            self.max_views_entry.bind("<Key>", handleReturn)
-            self.download_buffer_entry.bind("<Key>", handleReturn)
-            self.time_between_entry.bind("<Key>", handleReturn)
+            self.username_entry.bind("<Key>", handleReturn1)
+            self.twofactor_entry.bind("<Key>", handleReturn2)
+            self.password_entry.bind("<Key>", handleReturn3)
+            self.videopass_entry.bind("<Key>", handleReturn4)
+            self.age_limit_entry.bind("<Key>", handleReturn5)
+            self.min_views_entry.bind("<Key>", handleReturn6)
+            self.max_views_entry.bind("<Key>", handleReturn7)
+            self.max_downloads_entry.bind("<Key>", handleReturn8)
+            self.time_between_entry.bind("<Key>", handleReturn9)
 
             index = 0
-            for i in range(3):
+            for i in range(4):
                 _stabalize[index] += 1
                 index += 1
             index = 0
@@ -1663,6 +1821,30 @@ class OtherOptionWindow(object):
             pass
 
     def options_apply(self):
+        self.isSaved = True
+        self.username_saved = True
+        self.twofactor_saved = True
+        self.password_saved = True
+        self.videopass_saved = True
+        self.age_limit_saved = True
+        self.min_views_saved = True
+        self.max_views_saved = True
+        self.max_download_saved = True
+        self.time_between_saved = True
+        self.username_storage = self.var_1.get()
+        self.twofactor_storage = self.var_2.get()
+        self.password_storage = self.var_3.get()
+        self.videopass_storage = self.var_4.get()
+        self.age_limit_storage = self.var_11.get()
+        self.min_views_storage = self.var_12.get()
+        self.max_views_storage = self.var_13.get()
+        self.max_download_storage = self.var_20.get()
+        try:
+            if len(str(self.var_21.get())) <= 0:
+                self.var_21.set(1.75)
+            self.time_between_storage = self.var_21.get()
+        except:
+            self.var_21.set(1.75)
 
         if self.var1.get(): # Username
             if len(self.var_1.get()) <= 0:
@@ -1701,7 +1883,6 @@ class OtherOptionWindow(object):
                             video_ops.pop('twofactor')
                         else:
                             video_ops.update(twofactor=self.var_2.get())
-                        print(tuple(t))
             self.count = 1
         else:
             video_ops.update(twofactor=None)
@@ -1838,30 +2019,36 @@ class OtherOptionWindow(object):
                 video_ops.update(max_views=None)
                 video_ops.pop('max_views')
 
-        if len(self.var_20.get()) <= 0: # Download buffer
-            video_ops.update(buffersize=None)
-            video_ops.pop('buffersize')
+        global max_downloads
+        if len(self.var_20.get()) <= 0: # Max downloads
+            max_downloads = infinity
         else:
-            pass
+            if self.var_20.get().isnumeric():
+                max_downloads = int(self.var_20.get())
+            else:
+                messagebox.showwarning("???", "MAX DOWNLOADS: You must have numeric characters only.")
 
         def after_test():
             self.time_between_entry.delete(0, END)
             self.time_between_entry.insert(0, 1.75)
         try:
-            if len(str(self.var_21.get())) <= 0 or self.var_21.get() <= 0.20: # Time between downloads
+            if len(str(self.var_21.get())) <= 0 or self.var_21.get() < 0.50: # Time between downloads
                 self.time_between_entry.delete(0, END)
-                self.time_between_entry.insert(0, "0.20 or over.")
-                Entry.after(self.other_win, 1250, func=after_test)
+                self.time_between_entry.insert(0, "0.50 or over.")
+                self.time_between_entry.after(1400, func=after_test)
             else:
                 if self.var_21.get():
                     global wait_time
-                    wait_time = self.var_21.get()
+                    wait_time = float(self.var_21.get()) # changing value of wait_time
                 else:
-                    messagebox.showwarning("???", "TIME BETWEEN: Can only include a float (1.00).", parent=self.other_win)
+                    messagebox.showwarning("???", "TIME BETWEEN: Can only include a float (1.0, 1.00).", parent=self.other_win)
         except _tkinter.TclError:
-            messagebox.showwarning("???", "TIME BETWEEN: Can only include a float (1.00).", parent=self.other_win)
+            messagebox.showwarning("???", "TIME BETWEEN: Can only include a float (1.0, 1.00).", parent=self.other_win)
 
         self.apply_btn.configure(state=DISABLED)
+        sys.stderr = sys.__stderr__
+        sys.stdout = sys.__stdout__
+        print(max_downloads, "MAX DOWNLOADS", sep="   ")
         print(wait_time, "WAIT TIME", sep="   ")
         print(video_ops, "OTHER OPTIONS", sep="   ", end="\n\n")
 
@@ -1874,15 +2061,37 @@ class SettingsWindow(object):
     def __init__(self):
         self._title = 'Youtube-DL GUI by Gloryness -  v{}'.format(__version__)
         self._icon = '#app.ico'
-        self._size = ''
+        self._size = '650x400'
         self.apply_btn = None
+        self.settings_win = None
+        download_btn.configure(state=DISABLED)
 
     def on_settings(self):
         thread = threading.Thread(target=self.settings)
         thread.start()
 
     def settings(self):
-        pass
+        global _stabalize
+        if _stabalize[3] == 1:
+            download_btn.configure(state=DISABLED)
+            self.settings_win = Toplevel()
+            self.settings_win.title(self._title)
+            self.settings_win.iconbitmap(self._icon)
+            self.settings_win.resizable(False, False)
+            self.settings_win.configure(bg='#cbdbfc', bd=5)
+            self.settings_win.geometry(self._size)
+            self.settings_win.protocol("WM_DELETE_WINDOW", lambda: reset_settings_window(self.settings_win))
+
+            border = LabelFrame(self.settings_win, height=388, width=625, bg='#cbdbfc', bd=2, text="Settings", font="Cooper 18", labelanchor=N, relief=SOLID)
+            border.place(x=8, y=0)
+
+
+            index = 0
+            for i in range(4):
+                _stabalize[index] += 1
+                index += 1
+            index = 0
+            print(_stabalize)
 
     def apply_settings(self):
         pass
@@ -1972,13 +2181,13 @@ class DownloadConversion(yt.YoutubeDL):
         self.terminate_count = 1
         self._driver = None
         self.output_win = None
-        self.time_wait = wait_time
         self._downloadError = yt.utils.DownloadError
         self._FFmpegPostProcessorError = postprocessor.ffmpeg.FFmpegPostProcessorError
 
     def reset_count(self, win):
         win.destroy()
         edit_format.configure(state=ACTIVE)
+        detect_btn.configure(state=ACTIVE)
         self.win_count = 1
         sys.stdout = sys.__stdout__
         sys.stderr = sys.__stderr__
@@ -1986,6 +2195,7 @@ class DownloadConversion(yt.YoutubeDL):
     def reset_countV2(self, win):
         win.destroy()
         edit_format.configure(state=ACTIVE)
+        detect_btn.configure(state=ACTIVE)
         self.win_count = 1
 
     def new_win(self):
@@ -2004,9 +2214,17 @@ class DownloadConversion(yt.YoutubeDL):
             pass
 
     def quit_win(self):
+        global download_count
+        download_count = 0
+        video_ops.update(logger=None,
+                         progress_hooks=None)
+        video_ops.pop('logger')
+        video_ops.pop('progress_hooks')
         self.output_win.after(2400, lambda: self.reset_count(self.output_win))
 
     def short_quit_win(self):
+        global download_count
+        download_count = 0
         self.output_win.after(1700, lambda: self.reset_count(self.output_win))
 
     def undo(self):
@@ -2016,10 +2234,13 @@ class DownloadConversion(yt.YoutubeDL):
 
     def kill_button(self):
         edit_format.configure(state=DISABLED)
-        kill_button = ttk.Button(self.output_win, text="   Kill Operation   ", state=ACTIVE, style='some.TButton', command=self.terminate_download)
-        kill_button.place(x=455, y=356)
+        detect_btn.configure(state=DISABLED)
+        kill_button = ttk.Button(self.output_win, text="   Kill Operation (RISKY)   ", state=ACTIVE, style='some.TButton', command=self.terminate_download)
+        kill_button.place(x=425, y=356)
 
     def terminate_download(self):
+        global download_count
+        download_count = 0
         self.output_win.after(250, lambda: self.reset_countV2(self.output_win))
 
     def window(self):
@@ -2037,9 +2258,12 @@ class DownloadConversion(yt.YoutubeDL):
 
         """
         Mainly handles the errors, aswell as the downloading.
+        An error is a rare occurance now thanks to the update in v0.7.6 BETA.
         """
+        global max_downloads, download_count
         index = 0
         video_download = 1
+        download_count = 0
         _url = url_box.get("1.0", END).split()
         sys.stdout = sys.__stdout__
         sys.stderr = sys.__stderr__
@@ -2055,7 +2279,7 @@ class DownloadConversion(yt.YoutubeDL):
                     print("You must enter a URL")
                     download_call.short_quit_win()
 
-                elif not _url[0].startswith('https://'):
+                elif not _url[0].startswith(('https://', 'http://', 'file://')):
                     print("You must enter a VALID URL")
                     download_call.short_quit_win()
 
@@ -2063,59 +2287,77 @@ class DownloadConversion(yt.YoutubeDL):
                     download_call.kill_button()
                     raise self._downloadError("without this, will cause a bug - unknown why.")
 
+                elif max_downloads == 0 or max_downloads == 00 or max_downloads == 000 or max_downloads == 0000:
+                    print("\n\n[info] Maximum number of downloaded files reached!")
+                    print("[info] Maximum number of downloaded files reached!")
+                    print("[info] Maximum number of downloaded files reached!\n\n")
+                    download_call.quit_win()
+
+
                 elif len(_url) == 1:
                     download_call.kill_button()
-                    if quality_btn_var.get() != "NONE" \
-                        and audio_btn_var.get() == "NONE":
-                            ydl.download([_url[0]])
-                            extract7 = ydl.extract_info(_url[0], download=False)
-                            t = threading.Event()
-                            t.wait(1)
-                            subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + extract7['title'] + '".' + ext_btn_var.get().lower() + ' -an -y -preset fast "'
-                                            + destination_var.get() + '/' + extract7['title'] + 'V2"' + '.' + ext_btn_var.get().lower(), shell=False)
-                            os.remove(destination_var.get() + '/' + extract7['title'] + '.' + extract7['ext'])
-
-                    else:
-                        download_call.kill_button()
-                        ydl.download([_url[0]])
+                    ydl.download([_url[0]])
+                    if ext_btn_var.get() == "MP4" \
+                            or ext_btn_var.get() == "WEBM"\
+                            or ext_btn_var.get() == "OGG" \
+                            or ext_btn_var.get() == "FLV" \
+                            or ext_btn_var.get() == "AVI":
                         t = threading.Event()
                         t.wait(1.5)
+                        extract = ydl.extract_info(_url[0], download=False)
+                        print(f'\nConverting MKV to {ext_btn_var.get()}... This may take a while!', f'Converting MKV to {ext_btn_var.get()}... This may take a while!\n',
+                              sep='\n')
+                        subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + extract['title'] + '".mkv' + ' -preset fast "'
+                                        + destination_var.get() + '/' + extract['title'] + '!"' + '.' + ext_btn_var.get().lower(), shell=False)
+                        os.remove(destination_var.get() + '/' + extract['title'] + '.mkv')
+                        os.rename(
+                            destination_var.get() + '/' + extract['title'] + '!' + '.' + ext_btn_var.get().lower(),
+                            destination_var.get() + '/' + extract['title'] + '.' + ext_btn_var.get().lower()
+                        )
+                    t = threading.Event()
+                    t.wait(1.5)
 
                 elif len(_url) > 1:
                     download_call.kill_button()
-                    if quality_btn_var.get() != "NONE" \
-                        and audio_btn_var.get() == "NONE":
-                        index = 0
-                        for i in range(len(list(_url))):
+                    print(f"There will be a {wait_time} second delay between each download.\nThis is changeable in Other Options.")
+                    print(f"Max downloads: {max_downloads}\n")
+                    for i in range(len(list(_url))):
+                        if download_count == max_downloads:
+                            print("\n\n[info] Maximum number of downloaded files reached!")
+                            print("[info] Maximum number of downloaded files reached!")
+                            print("[info] Maximum number of downloaded files reached!\n\n")
+                            download_call.quit_win()
+                        else:
                             thread = threading.Event()
-                            thread.wait(self.time_wait)
+                            thread.wait(wait_time)
                             ydl.download([_url[index]])
-                            extract5 = ydl.extract_info(_url[0], download=False)
-                            t = threading.Event()
-                            t.wait(1)
-                            subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + extract5['title'] + '".' + ext_btn_var.get().lower() + ' -an -y -preset fast "'
-                                            + destination_var.get() + '/' + extract5['title'] + 'V2"' + '.' + ext_btn_var.get().lower(), shell=False)
+                            if ext_btn_var.get() == "MP4"\
+                                    or ext_btn_var.get() == "WEBM"\
+                                    or ext_btn_var.get() == "OGG"\
+                                    or ext_btn_var.get() == "FLV" \
+                                    or ext_btn_var.get() == "AVI":
+                                t = threading.Event()
+                                t.wait(1.5)
+                                extract0 = ydl.extract_info(_url[0], download=False)
+                                print(f'\nConverting MKV to {ext_btn_var.get()}... This may take a while!', f'Converting MKV to {ext_btn_var.get()}... This may take a while!\n',
+                                      sep='\n')
+                                subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + extract0['title'] + '".mkv' + ' -preset fast "'
+                                                + destination_var.get() + '/' + extract0['title'] + '!"' + '.' + ext_btn_var.get().lower(), shell=False)
+                                os.remove(destination_var.get() + '/' + extract0['title'] + '.mkv')
+                                os.rename(
+                                    destination_var.get() + '/' + extract0['title'] + '!' + '.' + ext_btn_var.get().lower() ,
+                                    destination_var.get() + '/' + extract0['title'] + '.' + ext_btn_var.get().lower()
+                                )
                             _url.pop(index)
-                            os.remove(destination_var.get() + '/' + extract5['title'] + '.' + extract5['ext'])
                             print("\nDownload [{}] completed\n".format(video_download))
                             video_download += 1
-                        video_download = 1
-                        download_call.quit_win()
-                    else:
-                        download_call.kill_button()
-                        for i in range(len(list(_url))):
-                            thread = threading.Event()
-                            thread.wait(self.time_wait)
-                            ydl.download([_url[index]])
-                            _url.pop(index)
-                            print("\nDownload [{}] completed\n".format(video_download))
-                            video_download += 1
+                            download_count += 1
                         video_download = 1
                         download_call.quit_win()
 
             except self._downloadError or self._FFmpegPostProcessorError or Exception as exc:
                 logger.exception(msg='\n{} was unable to convert to {} due to no available formats otherwise an unknown error.\n'
-                           .format(_url[0], video_ops.get('merge_output_format')))
+                           .format(_url[index], video_ops.get('merge_output_format')))
                 t = threading.Event()
                 t.wait(1)
                 print("error: %s" % exc)
@@ -2125,25 +2367,31 @@ class DownloadConversion(yt.YoutubeDL):
 
                 if quality_btn_var.get() != "NONE" \
                     and audio_btn_var.get() != "NONE":
-                        video_ops.update(merge_output_format='mkv', nooverwrites=False)
+                        video_ops.update(merge_output_format='mkv')
                         with yt.YoutubeDL(video_ops) as ytd:
                             try:
                                 if len(_url) == 1:
                                     ytd.download([_url[0]])
                                 if len(_url) > 1:
                                     for i in range(len(list(_url))):
-                                        thread = threading.Event()
-                                        thread.wait(self.time_wait)
-                                        ytd.download([_url[index]])
-                                        _url.pop(index)
-                                        print("\nDownload [{}] completed\n".format(video_download))
-                                        video_download += 1
+                                        if download_count == max_downloads:
+                                            print("\n\n[info] Maximum number of downloaded files reached!")
+                                            print("[info] Maximum number of downloaded files reached!")
+                                            print("[info] Maximum number of downloaded files reached!\n\n")
+                                            download_call.quit_win()
+                                        else:
+                                            thread = threading.Event()
+                                            thread.wait(wait_time)
+                                            ytd.download([_url[index]])
+                                            _url.pop(index)
+                                            print("\nDownload [{}] completed\n".format(video_download))
+                                            video_download += 1
                                     video_download = 1
                                     download_call.quit_win()
 
                             except self._downloadError or self._FFmpegPostProcessorError or Exception:
                                 logger.exception(level=logging.WARNING, msg='\n{} was unable to convert to {} due to no available formats otherwise an unknown error.\n'
-                                           .format(_url[0], video_ops.get('merge_output_format')))
+                                           .format(_url[index], video_ops.get('merge_output_format')))
                                 video_ops.pop('merge_output_format')
                                 video_ops.update(nooverwrites=False, ext='{}'.format(ext_btn_var.get().lower()))
                                 with yt.YoutubeDL(video_ops) as ytk:
@@ -2152,12 +2400,18 @@ class DownloadConversion(yt.YoutubeDL):
                                             ytd.download([_url[0]])
                                         if len(_url) > 1:
                                             for i in range(len(list(_url))):
-                                                thread = threading.Event()
-                                                thread.wait(self.time_wait)
-                                                ytd.download([_url[index]])
-                                                _url.pop(index)
-                                                print("\nDownload [{}] completed\n".format(video_download))
-                                                video_download += 1
+                                                if download_count == max_downloads:
+                                                    print("\n\n[info] Maximum number of downloaded files reached!")
+                                                    print("[info] Maximum number of downloaded files reached!")
+                                                    print("[info] Maximum number of downloaded files reached!\n\n")
+                                                    download_call.quit_win()
+                                                else:
+                                                    thread = threading.Event()
+                                                    thread.wait(wait_time)
+                                                    ytd.download([_url[index]])
+                                                    _url.pop(index)
+                                                    print("\nDownload [{}] completed\n".format(video_download))
+                                                    video_download += 1
                                             video_download = 1
                                             download_call.quit_win()
                                     except Exception as exc:
@@ -2184,33 +2438,45 @@ class DownloadConversion(yt.YoutubeDL):
                                         ytd.download([_url[0]])
                                     if len(_url) > 1:
                                         for i in range(len(list(_url))):
-                                            thread = threading.Event()
-                                            thread.wait(self.time_wait)
-                                            ytd.download([_url[index]])
-                                            _url.pop(index)
-                                            print("\nDownload [{}] completed\n".format(video_download))
-                                            video_download += 1
+                                            if download_count == max_downloads:
+                                                print("\n\n[info] Maximum number of downloaded files reached!")
+                                                print("[info] Maximum number of downloaded files reached!")
+                                                print("[info] Maximum number of downloaded files reached!\n\n")
+                                                download_call.quit_win()
+                                            else:
+                                                thread = threading.Event()
+                                                thread.wait(wait_time)
+                                                ytd.download([_url[index]])
+                                                _url.pop(index)
+                                                print("\nDownload [{}] completed\n".format(video_download))
+                                                video_download += 1
                                         video_download = 1
                                         download_call.quit_win()
                                 except self._downloadError or self._FFmpegPostProcessorError or Exception:
                                     logger.exception(msg='\n{} was unable to convert to {} due to no available formats otherwise an unknown error.\n'
-                                               .format(_url[0], video_ops.get('merge_output_format')))
+                                               .format(_url[index], video_ops.get('merge_output_format')))
                                     video_ops.update(postprocessors=[{
                                         "key": 'FFmpegExtractAudio',
                                         "preferredcodec": 'wav'
-                                    }], nooverwrites=False, ext='{}'.format(ext_btn_var.get().lower()))
+                                    }], ext='{}'.format(ext_btn_var.get().lower()))
                                     with yt.YoutubeDL(video_ops) as ytk:
                                         try:
                                             if len(_url) == 1:
                                                 ytk.download([_url[0]])
                                             if len(_url) > 1:
                                                 for i in range(len(list(_url))):
-                                                    thread = threading.Event()
-                                                    thread.wait(self.time_wait)
-                                                    ytk.download([_url[index]])
-                                                    _url.pop(index)
-                                                    print("\nDownload [{}] completed\n".format(video_download))
-                                                    video_download += 1
+                                                    if download_count == max_downloads:
+                                                        print("\n\n[info] Maximum number of downloaded files reached!")
+                                                        print("[info] Maximum number of downloaded files reached!")
+                                                        print("[info] Maximum number of downloaded files reached!\n\n")
+                                                        download_call.quit_win()
+                                                    else:
+                                                        thread = threading.Event()
+                                                        thread.wait(wait_time)
+                                                        ytk.download([_url[index]])
+                                                        _url.pop(index)
+                                                        print("\nDownload [{}] completed\n".format(video_download))
+                                                        video_download += 1
                                                 video_download = 1
                                                 download_call.quit_win()
                                         except Exception as exc:
@@ -2228,40 +2494,52 @@ class DownloadConversion(yt.YoutubeDL):
                             video_ops.update(postprocessors=[{
                                 "key": 'FFmpegExtractAudio',
                                 "preferredcodec": 'wav'
-                            }], nooverwrites=False)
+                            }])
                             with yt.YoutubeDL(video_ops) as ytd:
                                 try:
                                     if len(_url) == 1:
                                         ytd.download([_url[0]])
                                     if len(_url) > 1:
                                         for i in range(len(list(_url))):
-                                            thread = threading.Event()
-                                            thread.wait(self.time_wait)
-                                            ytd.download([_url[index]])
-                                            _url.pop(index)
-                                            print("\nDownload [{}] completed\n".format(video_download))
-                                            video_download += 1
+                                            if download_count == max_downloads:
+                                                print("\n\n[info] Maximum number of downloaded files reached!")
+                                                print("[info] Maximum number of downloaded files reached!")
+                                                print("[info] Maximum number of downloaded files reached!\n\n")
+                                                download_call.short_quit_win()
+                                            else:
+                                                thread = threading.Event()
+                                                thread.wait(wait_time)
+                                                ytd.download([_url[index]])
+                                                _url.pop(index)
+                                                print("\nDownload [{}] completed\n".format(video_download))
+                                                video_download += 1
                                         video_download = 1
                                         download_call.quit_win()
                                 except self._downloadError or self._FFmpegPostProcessorError or Exception:
                                     logger.exception(msg='\n{} was unable to convert to {} due to no available formats otherwise an unknown error.\n'
-                                               .format(_url[0], video_ops.get('merge_output_format')))
+                                               .format(_url[index], video_ops.get('merge_output_format')))
                                     video_ops.update(postprocessors=[{
                                         "key": 'FFmpegExtractAudio',
                                         "preferredcodec": 'mp3'
-                                    }], nooverwrites=False, ext='{}'.format(ext_btn_var.get().lower()))
+                                    }], ext='{}'.format(ext_btn_var.get().lower()))
                                     with yt.YoutubeDL(video_ops) as ytk:
                                         try:
                                             if len(_url) == 1:
                                                 ytk.download([_url[0]])
                                             if len(_url) > 1:
                                                 for i in range(len(list(_url))):
-                                                    thread = threading.Event()
-                                                    thread.wait(self.time_wait)
-                                                    ytk.download([_url[index]])
-                                                    _url.pop(index)
-                                                    print("\nDownload [{}] completed\n".format(video_download))
-                                                    video_download += 1
+                                                    if download_count == max_downloads:
+                                                        print("\n\n[info] Maximum number of downloaded files reached!")
+                                                        print("[info] Maximum number of downloaded files reached!")
+                                                        print("[info] Maximum number of downloaded files reached!\n\n")
+                                                        download_call.quit_win()
+                                                    else:
+                                                        thread = threading.Event()
+                                                        thread.wait(wait_time)
+                                                        ytk.download([_url[index]])
+                                                        _url.pop(index)
+                                                        print("\nDownload [{}] completed\n".format(video_download))
+                                                        video_download += 1
                                                 video_download = 1
                                         except Exception as exc:
                                             logger.exception(msg='\nCRITICAL : an error occured and was unable to merge/download... error: %s\n' % exc)
@@ -2276,7 +2554,7 @@ class DownloadConversion(yt.YoutubeDL):
 
                 elif audio_btn_var.get() == "NONE" \
                     and quality_btn_var.get() != "NONE":
-                        video_ops.update(merge_output_format='mkv', nooverwrites=False, ext='mkv')
+                        video_ops.update(merge_output_format='mkv', ext='mkv')
                         with yt.YoutubeDL(video_ops) as ytd:
                             try:
                                 if len(_url) == 1:
@@ -2284,35 +2562,31 @@ class DownloadConversion(yt.YoutubeDL):
                                     extract1 = ytd.extract_info(_url[0], download=False)
                                     t = threading.Event()
                                     t.wait(1)
-                                    subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + extract1['title'] + '".mkv'
-                                                    + ' -an -y -preset fast "'
-                                                    + destination_var.get() + '/' + extract1['title'] + 'V2"' + '.mkv', shell=False)
-                                    os.remove(destination_var.get() + '/' + extract1['title'] + '.mkv')
                                 if len(_url) > 1:
                                     for i in range(len(list(_url))):
-                                        thread = threading.Event()
-                                        thread.wait(self.time_wait)
-                                        ytd.download([_url[index]])
-                                        extract2 = ytd.extract_info(_url[0], download=False)
-                                        t = threading.Event()
-                                        t.wait(1)
-                                        subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + extract2['title'] + '".mkv'
-                                                        + ' -an -y -preset fast "'
-                                                        + destination_var.get() + '/' + extract2['title'] + 'V2"' + '.mkv', shell=False)
-                                        _url.pop(index)
-                                        os.remove(destination_var.get() + '/' + extract2['title'] + '.mkv')
-                                        print("\nDownload [{}] completed\n".format(video_download))
-                                        video_download += 1
+                                        if download_count == max_downloads:
+                                            print("\n\n[info] Maximum number of downloaded files reached!")
+                                            print("[info] Maximum number of downloaded files reached!")
+                                            print("[info] Maximum number of downloaded files reached!\n\n")
+                                            download_call.quit_win()
+                                        else:
+                                            thread = threading.Event()
+                                            thread.wait(wait_time)
+                                            ytd.download([_url[index]])
+                                            extract2 = ytd.extract_info(_url[0], download=False)
+                                            t = threading.Event()
+                                            t.wait(1)
+                                            _url.pop(index)
+                                            print("\nDownload [{}] completed\n".format(video_download))
+                                            video_download += 1
                                     video_download = 1
                                     download_call.quit_win()
 
                             except self._downloadError or self._FFmpegPostProcessorError or Exception:
                                 logger.exception(msg='\n{} was unable to convert to {} due to no available formats otherwise an unknown error.\n'
-                                           .format(_url[0], video_ops.get('merge_output_format')))
+                                           .format(_url[index], video_ops.get('merge_output_format')))
                                 video_ops.pop('merge_output_format')
                                 extract = ydl.extract_info(_url[0], download=False)
-                                video_ops.update(nooverwrites=False)
-                                video_ops.pop('ext')
                                 with yt.YoutubeDL(video_ops) as ytk:
                                     try:
                                         if len(_url) == 1:
@@ -2320,26 +2594,24 @@ class DownloadConversion(yt.YoutubeDL):
                                             extract4 = ytk.extract_info(_url[0], download=False)
                                             t = threading.Event()
                                             t.wait(1)
-                                            subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + extract4['title'] + '.' + extract4['ext']
-                                                            + '" -an -y -preset fast "'
-                                                            + destination_var.get() + '/' + extract4['title'] + 'V2"' + '.' + extract4['ext'], shell=False)
-                                            os.remove(destination_var.get() + '/' + extract4['title'] + '.' + extract4['ext'])
                                         if len(_url) > 1:
                                             for i in range(len(list(_url))):
-                                                thread = threading.Event()
-                                                thread.wait(self.time_wait)
-                                                ytk.download([_url[index]])
-                                                video_ops.update(outtmpl=destination_var.get() + '/%(title)s.%(ext)s')
-                                                extract3 = ytk.extract_info(_url[0], download=False)
-                                                t = threading.Event()
-                                                t.wait(1)
-                                                subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + extract3['title'] + '.' + extract3['ext']
-                                                    + '" -an -y -preset fast "'
-                                                    + destination_var.get() + '/' + extract3['title'] + 'V2"' + '.' + extract3['ext'], shell=False)
-                                                _url.pop(index)
-                                                os.remove(destination_var.get() + '/' + extract3['title'] + '.' + extract3['ext']) # Delete the orignal file w/ sound
-                                                print("\nDownload [{}] completed\n".format(video_download))
-                                                video_download += 1
+                                                if download_count == max_downloads:
+                                                    print("\n\n[info] Maximum number of downloaded files reached!")
+                                                    print("[info] Maximum number of downloaded files reached!")
+                                                    print("[info] Maximum number of downloaded files reached!\n\n")
+                                                    download_call.quit_win()
+                                                else:
+                                                    thread = threading.Event()
+                                                    thread.wait(wait_time)
+                                                    ytk.download([_url[index]])
+                                                    video_ops.update(outtmpl=destination_var.get() + '/%(title)s.%(ext)s')
+                                                    extract3 = ytk.extract_info(_url[0], download=False)
+                                                    t = threading.Event()
+                                                    t.wait(1)
+                                                    _url.pop(index)
+                                                    print("\nDownload [{}] completed\n".format(video_download))
+                                                    video_download += 1
                                             video_download = 1
                                             download_call.quit_win()
 
@@ -2378,7 +2650,7 @@ class DownloadConversion(yt.YoutubeDL):
                 self._driver.get('https://www.youtube.com/')
                 self._driver.maximize_window()
             except Exception as exc:
-                logger.log(level=logging.ERROR, msg="An error occured: %s" % exc)
+                logger.exception("ERROR: An error occured while opening selenium: %s" % exc)
         elif confirm is False:
             download_call.on_get_urls()
         else:
@@ -2388,9 +2660,8 @@ class DownloadConversion(yt.YoutubeDL):
         try:
             self._index = 0
             self._driver.switch_to.window(self._driver.window_handles[self._index])
-
             for i in range(len(self._driver.window_handles)):
-                if str(self._driver.current_url).startswith('https://www.youtube.com/watch?v='):
+                if str(self._driver.current_url).startswith(tuple(all_extractors.pack_extractors)):
                     url_box.insert("1.0", self._driver.current_url + "\n")
                     self._index += 1
                 try:
