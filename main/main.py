@@ -1,9 +1,9 @@
-from __future__ import unicode_literals, print_function
+from __future__ import unicode_literals
 
 from BorderEntry import BorderedEntry
 from valid_extractors import AllExtractors
 from install_ffmpeg import InstallFFmpeg
-from settings import SettingsWindow
+from settings_window import SettingsWindow
 
 from _tkinter import TclError
 from tkinter import *
@@ -27,7 +27,7 @@ import threading
 import logging
 import webbrowser
 
-__version__ = '0.7.8 BETA'
+__version__ = '0.8.5 BETA'
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -118,9 +118,6 @@ def settings():
     setting = SettingsWindow(__version__, download_btn, done_btn, _stabalize)
     setting.on_settings()
 
-file_menu.add_command(label="Add Configuration...", command='')
-file_menu.add_command(label="Load Configuration...", command='')
-file_menu.add_command(label="Save Configuration...", command='')
 file_menu.add_command(label="Settings", command=settings)
 file_menu.add_separator()
 file_menu.add_command(label="Exit", command=root.quit)
@@ -130,11 +127,15 @@ my_menu.add_cascade(label="Tools", menu=tools_menu)
 
 def installffmpeg():
     a = InstallFFmpeg(__version__)
-    a.on_installation()
+    a.on_ffmpeg_window()
+
+def update_youtubedl():
+    subprocess.call('pip install -U youtube-dl')
 
 tools_menu.add_command(label="Go To Destination Folder", command=go_to)
 tools_menu.add_separator()
 tools_menu.add_command(label="Install FFmpeg", command=installffmpeg)
+tools_menu.add_command(label="Update Youtube-DL", command=update_youtubedl)
 
 credits_menu = Menu(my_menu, tearoff=0)
 my_menu.add_cascade(label="Credits", menu=credits_menu)
@@ -425,25 +426,25 @@ class Updates(object):
     def edit_format_btns():
         confirm = messagebox.askquestion("Are You Sure?", "Would you like to edit your video formats?")
         if confirm == "yes":
-            done_btn.configure(state=ACTIVE)
+            done_btn.configure(state=NORMAL)
             style2.configure('done.TButton', bd=2)
-            quality_btn.configure(state=ACTIVE)
-            audio_btn.configure(state=ACTIVE)
-            ext_btn.configure(state=ACTIVE)
+            quality_btn.configure(state=NORMAL)
+            audio_btn.configure(state=NORMAL)
+            ext_btn.configure(state=NORMAL)
             do.disable_options()
         else:
             pass
 
     @staticmethod
     def after_done_btn():
-        file_options_btn.configure(state=ACTIVE)
-        download_options_btn.configure(state=ACTIVE)
-        other_options_btn.configure(state=ACTIVE)
-        detect_btn.configure(state=ACTIVE)
-        download_btn.configure(state=ACTIVE)
-        edit_format.configure(state=ACTIVE)
+        file_options_btn.configure(state=NORMAL)
+        download_options_btn.configure(state=NORMAL)
+        other_options_btn.configure(state=NORMAL)
+        detect_btn.configure(state=NORMAL)
+        download_btn.configure(state=NORMAL)
+        edit_format.configure(state=NORMAL)
         url_box.configure(state=NORMAL, bd=4)
-        clear_btn.configure(state=ACTIVE)
+        clear_btn.configure(state=NORMAL)
 
     @staticmethod
     def disable_options():
@@ -557,7 +558,6 @@ second_format_label.place(x=242, y=197)
 
 infinity = 9999999
 max_downloads = infinity
-download_count = 0
 file_count = 1
 download_count = 1
 other_count = 1
@@ -573,7 +573,7 @@ def reset_file_window(win):
     _stabalize[3] = 1
     state = str(done_btn['state'])
     if state == 'disabled':
-        download_btn.configure(state=ACTIVE)
+        download_btn.configure(state=NORMAL)
     file_option.hold_variables()
 
 def reset_download_window(win):
@@ -584,7 +584,7 @@ def reset_download_window(win):
     _stabalize[3] = 1
     state = str(done_btn['state'])
     if state == 'disabled':
-        download_btn.configure(state=ACTIVE)
+        download_btn.configure(state=NORMAL)
     download_option.hold_variables()
 
 def reset_other_window(win):
@@ -595,19 +595,8 @@ def reset_other_window(win):
     _stabalize[3] = 1
     state = str(done_btn['state'])
     if state == 'disabled':
-        download_btn.configure(state=ACTIVE)
+        download_btn.configure(state=NORMAL)
     other_option.hold_variables()
-
-def reset_settings_window(win):
-    global _stabalize
-    _stabalize[0] = 1
-    _stabalize[1] = 1
-    _stabalize[2] = 1
-    _stabalize[3] = 1
-    state = str(done_btn['state'])
-    if state == 'disabled':
-        download_btn.configure(state=ACTIVE)
-    win.destroy()
 
 class FileOptionWindow(object):
     """
@@ -841,13 +830,8 @@ class FileOptionWindow(object):
             clearbtn = ttk.Button(self.file_win, image=clear_img, command=clear_text)
             clearbtn.place(x=530, y=294)
 
-
-
-            index = 0
-            for i in range(4):
+            for index, var in enumerate(_stabalize):
                 _stabalize[index] += 1
-                index += 1
-            index = 0
             print(_stabalize)
         else:
             pass
@@ -1271,11 +1255,9 @@ class DownloadOptionWindow(object):
             self.input_entry2.bind("<Key>", handleReturn2)
             self.input_entry3.bind("<Key>", handleReturn3)
             self.input_entry4.bind("<Key>", handleReturn4)
-            index = 0
-            for i in range(4):
+
+            for index, var in enumerate(_stabalize):
                 _stabalize[index] += 1
-                index += 1
-            index = 0
             print(_stabalize)
         else:
             pass
@@ -1873,11 +1855,8 @@ class OtherOptionWindow(object):
             self.max_downloads_entry.bind("<Key>", handleReturn8)
             self.time_between_entry.bind("<Key>", handleReturn9)
 
-            index = 0
-            for i in range(4):
+            for index, var in enumerate(_stabalize):
                 _stabalize[index] += 1
-                index += 1
-            index = 0
             print(_stabalize)
 
         else:
@@ -2170,10 +2149,11 @@ class StdDirector(object):
 
 floatnum = "3.0"
 part_type = "-- VIDEO --"
+toggle = 0
 
-class CoreGUI(object):
+class CoreGUI:
     """
-    Creating the text box for output and redirecting the stdout and stderr to text box
+    Creating the text box for output and redirecting the stdout and stderr to the text box.
     """
 
     def __init__(self, parent):
@@ -2199,8 +2179,17 @@ class CoreGUI(object):
         except:
             pass
 
+    def normal_delete(self):
+        try:
+            self.text_box.config(state=NORMAL)
+            self.text_box.delete("3.0", "end")
+            self.text_box.see("end")
+            self.text_box.config(state=DISABLED)
+        except:
+            pass
 
-class DownloadConversion(yt.YoutubeDL):
+
+class DownloadConversion:
     """
     Needs threading otherwise errors will occur, and multiple freezes.
 
@@ -2208,8 +2197,6 @@ class DownloadConversion(yt.YoutubeDL):
     """
 
     def __init__(self):
-        super().__init__()
-        self._err_file = sys.__stderr__
         self._index = 0
         self.win_count = 1
         self.terminate_count = 1
@@ -2262,13 +2249,9 @@ class DownloadConversion(yt.YoutubeDL):
             pass
 
     def quit_win(self):
-        global download_count
-        download_count = 0
         self.output_win.after(2400, lambda: self.reset_count(self.output_win))
 
     def short_quit_win(self):
-        global download_count
-        download_count = 0
         self.output_win.after(1700, lambda: self.reset_count(self.output_win))
 
     @staticmethod
@@ -2283,8 +2266,6 @@ class DownloadConversion(yt.YoutubeDL):
         kill_button.place(x=425, y=356)
 
     def terminate_download(self):
-        global download_count
-        download_count = 0
         self.output_win.after(250, lambda: self.reset_countV2(self.output_win))
 
     def window(self):
@@ -2294,15 +2275,31 @@ class DownloadConversion(yt.YoutubeDL):
         self.output_win.after(200, self.on_download)
 
     @staticmethod
+    def _delete_lines():
+        t.normal_delete()
+
+    @staticmethod
     def my_hook(d):
         global floatnum
         global part_type
+        global toggle
         if d['status'] == 'finished':
             thread = threading.Event()
             thread.wait(0.1)
             print('\nDone downloading, now converting ...')
-            floatnum = "10.0"
-            part_type = "-- AUDIO --"
+            if len(_url) == 1: # this is to support the downloading of playlists.
+                print("yes")
+                if toggle == 0:
+                    floatnum = "10.0"
+                    part_type = "-- AUDIO --"
+                    toggle = 1
+                elif toggle == 1:
+                    floatnum = "3.0"
+                    part_type = "-- VIDEO --"
+                    toggle = 0
+            else:
+                floatnum = "10.0"
+                part_type = "-- AUDIO --"
             thread = threading.Event()
             thread.wait(1.5)
         if d['status'] == 'downloading':
@@ -2315,22 +2312,24 @@ class DownloadConversion(yt.YoutubeDL):
             '''
 
     def Download(self):
-
         """
         Mainly handles the errors, aswell as the downloading.
         An error is a rare occurance now thanks to the update in v0.7.6 BETA.
         """
-        global max_downloads, download_count
-        global floatnum, part_type
+        global max_downloads
+        global floatnum, part_type, _url
         floatnum = "3.0"
         part_type = "-- VIDEO --"
-        index = 0
-        video_download = 1
-        download_count = 0
-        _url = url_box.get("1.0", END).split() # split() will seperate all strings containing a space or new line
+        _url = url_box.get("1.0", END).split(sep="\n") # split() will seperate all strings containing a space or new line
         sys.stdout = sys.__stdout__
         sys.stderr = sys.__stderr__
+        [_url.remove(x) for x in _url if not x.startswith(('https://', 'http://'))]
+        try:
+            [_url.remove('') for i in range(len(_url))]
+        except ValueError:
+            pass
         print(_url)
+        _url_iterator = iter(_url) # this will make an iterator object generator which will let us go through the list 1 by 1 each time I call next(_url_iterator)
         self.undo()
         video_ops.update(logger=MyLogger(),
                          progress_hooks=[self.my_hook])
@@ -2353,15 +2352,11 @@ class DownloadConversion(yt.YoutubeDL):
                     print("You must enter a URL")
                     self.short_quit_win()
 
-                elif not _url[0].startswith(('https://', 'http://', 'file://')):
+                elif not _url[0].startswith(('https://', 'http://')):
                     print("You must enter a VALID URL")
                     self.short_quit_win()
 
-                elif ext_btn_var.get() == "WAV":
-                    self.kill_button()
-                    raise self._downloadError("without this, will cause a bug - unknown why.")
-
-                elif max_downloads == 0 or max_downloads == 00 or max_downloads == 000 or max_downloads == 0000:
+                elif max_downloads == 0 or max_downloads == 00 or max_downloads == 000 or max_downloads == 0000 or max_downloads == 00000:
                     print("\n\n[info] Maximum number of downloaded files reached!")
                     print("[info] Maximum number of downloaded files reached!")
                     print("[info] Maximum number of downloaded files reached!\n\n")
@@ -2370,14 +2365,15 @@ class DownloadConversion(yt.YoutubeDL):
 
                 elif len(_url) == 1:
                     self.kill_button()
-                    ydl.download([_url[0]])
+                    _url_holder = next(_url_iterator)
+                    ydl.download([_url_holder])
                     if ext_btn_var.get() == "MP4" \
                             or ext_btn_var.get() == "WEBM"\
                             or ext_btn_var.get() == "FLV" \
                             or ext_btn_var.get() == "AVI":
                         t = threading.Event()
                         t.wait(1.5)
-                        extract = ydl.extract_info(_url[0], download=False)
+                        extract = ydl.extract_info(_url_holder, download=False)
                         print(f'\nConverting MKV to {ext_btn_var.get()}... This may take a while!', f'Converting MKV to {ext_btn_var.get()}... This may take a while!\n',
                               sep='\n')
                         subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + extract['title'] + '".mkv' + ' -preset fast "'
@@ -2390,7 +2386,7 @@ class DownloadConversion(yt.YoutubeDL):
                     if ext_btn_var.get() == "OGG":
                         t = threading.Event()
                         t.wait(1.5)
-                        extract = ydl.extract_info(_url[0], download=False)
+                        extract = ydl.extract_info(_url_holder, download=False)
                         print(f'\nConverting MP3 to {ext_btn_var.get()}... This may take a while!', f'Converting MP3 to {ext_btn_var.get()}... This may take a while!\n',
                               sep='\n')
                         subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + extract['title'] + '".mp3' + ' -preset fast "'
@@ -2407,37 +2403,43 @@ class DownloadConversion(yt.YoutubeDL):
                     self.kill_button()
                     print(f"There will be a {wait_time} second delay between each download.\nThis is changeable in Other Options.")
                     print(f"Max downloads: {max_downloads}\n")
-                    for i in range(len(list(_url))):
-                        if download_count == max_downloads:
+
+                    for index, link in enumerate(_url, start=1): # going to loop through this code X amount of times and it will track the index which starts at 1
+                        if index == max_downloads:               # which we use for tracking the download count.
                             print("\n\n[info] Maximum number of downloaded files reached!")
                             print("[info] Maximum number of downloaded files reached!")
                             print("[info] Maximum number of downloaded files reached!\n\n")
                             self.quit_win()
                         else:
-                            print("Download [{}] starting".format(video_download))
+                            _url_holder = next(_url_iterator)
+                            if index >= 1:
+                                self._delete_lines()
+                                print("\n\nDownload [{}] starting\n".format(index))
+                            else:
+                                print("Download [{}] starting\n".format(index))
                             thread = threading.Event()
                             thread.wait(wait_time)
-                            ydl.download([_url[index]])
+                            ydl.download([_url_holder])
                             if ext_btn_var.get() == "MP4"\
                                 or ext_btn_var.get() == "WEBM"\
                                 or ext_btn_var.get() == "FLV" \
                                 or ext_btn_var.get() == "AVI":
-                                    t = threading.Event()
-                                    t.wait(1.5)
-                                    extract0 = ydl.extract_info(_url[index], download=False)
+                                    thread = threading.Event()
+                                    thread.wait(1.5)
+                                    extract = ydl.extract_info(_url_holder, download=False)
                                     print(f'\nConverting MKV to {ext_btn_var.get()}... This may take a while!', f'Converting MKV to {ext_btn_var.get()}... This may take a while!\n',
                                           sep='\n')
-                                    subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + extract0['title'] + '".mkv' + ' -preset fast "'
-                                                    + destination_var.get() + '/' + extract0['title'] + '!"' + '.' + ext_btn_var.get().lower(), shell=False)
-                                    os.remove(destination_var.get() + '/' + extract0['title'] + '.mkv')
+                                    subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + extract['title'] + '".mkv' + ' -preset fast "'
+                                                    + destination_var.get() + '/' + extract['title'] + '!"' + '.' + ext_btn_var.get().lower(), shell=False)
+                                    os.remove(destination_var.get() + '/' + extract['title'] + '.mkv')
                                     os.rename(
-                                        destination_var.get() + '/' + extract0['title'] + '!' + '.' + ext_btn_var.get().lower() ,
-                                        destination_var.get() + '/' + extract0['title'] + '.' + ext_btn_var.get().lower()
+                                        destination_var.get() + '/' + extract['title'] + '!' + '.' + ext_btn_var.get().lower() ,
+                                        destination_var.get() + '/' + extract['title'] + '.' + ext_btn_var.get().lower()
                                     )
                             if ext_btn_var.get() == "OGG":
-                                t = threading.Event()
-                                t.wait(1.5)
-                                extract = ydl.extract_info(_url[index], download=False)
+                                thread = threading.Event()
+                                thread.wait(1.5)
+                                extract = ydl.extract_info(_url_holder, download=False)
                                 print(f'\nConverting MP3 to {ext_btn_var.get()}... This may take a while!', f'Converting MP3 to {ext_btn_var.get()}... This may take a while!\n',
                                       sep='\n')
                                 subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + extract['title'] + '".mp3' + ' -preset fast "'
@@ -2447,8 +2449,7 @@ class DownloadConversion(yt.YoutubeDL):
                                     destination_var.get() + '/' + extract['title'] + '!' + '.' + ext_btn_var.get().lower(),
                                     destination_var.get() + '/' + extract['title'] + '.' + ext_btn_var.get().lower()
                                 )
-                            _url.pop(index)
-                            print("\nDownload [{}] completed\n".format(video_download))
+                            print("\nDownload [{}] completed\n".format(index))
                             thread = threading.Event()
                             thread.wait(0.5)
                             if quality_btn_var.get() != "NONE" \
@@ -2466,22 +2467,17 @@ class DownloadConversion(yt.YoutubeDL):
                                     part_type = '-- VIDEO --'
                                     floatnum = "3.0"
 
-                        video_download += 1
-                        download_count += 1
-                    video_download = 1
                     self.quit_win()
 
-            except self._downloadError or self._FFmpegPostProcessorError or Exception as exc:
+            except Exception as exc:
                 '''
                 Anything after this is considered "junk" as it's very rare for an error to occur now.
                 '''
                 logger.exception(msg='\n{} was unable to convert to {} due to no available formats otherwise an unknown error.\n'
-                           .format(_url[index], video_ops.get('merge_output_format')))
+                           .format(_url_holder, video_ops.get('merge_output_format')))
                 t = threading.Event()
                 t.wait(1)
                 print("error: %s" % exc)
-                print("Sorry, but we could not download the requested format {}!\nThe video will be merged into a more suitable format instead. Such as MKV."
-                      .format(ext_btn_var.get().lower()))
                 t.wait(1.75)
 
                 if quality_btn_var.get() != "NONE" \
@@ -2490,10 +2486,10 @@ class DownloadConversion(yt.YoutubeDL):
                         with yt.YoutubeDL(video_ops) as ytd:
                             try:
                                 if len(_url) == 1:
-                                    ytd.download([_url[0]])
+                                    ytd.download([_url_holder])
                                 if len(_url) > 1:
-                                    for i in range(len(list(_url))):
-                                        if download_count == max_downloads:
+                                    for index, link in enumerate(_url):
+                                        if index == max_downloads:
                                             print("\n\n[info] Maximum number of downloaded files reached!")
                                             print("[info] Maximum number of downloaded files reached!")
                                             print("[info] Maximum number of downloaded files reached!\n\n")
@@ -2501,48 +2497,72 @@ class DownloadConversion(yt.YoutubeDL):
                                         else:
                                             thread = threading.Event()
                                             thread.wait(wait_time)
-                                            ytd.download([_url[index]])
-                                            _url.pop(index)
-                                            print("\nDownload [{}] completed\n".format(video_download))
-                                            video_download += 1
-                                    video_download = 1
+                                            ytd.download([_url_holder])
+                                            print("\nDownload [{}] completed\n".format(index+1))
+                                            _url_holder = next(_url_iterator)
+                                            if quality_btn_var.get() != "NONE" \
+                                                and audio_btn_var.get() != "NONE":
+                                                    part_type = '-- VIDEO --'
+                                                    floatnum = "3.0"
+
+                                            elif quality_btn_var.get() == "NONE" \
+                                                and audio_btn_var.get() != "NONE":
+                                                    part_type = '-- AUDIO --'
+                                                    floatnum = "3.0"
+
+                                            elif quality_btn_var.get() != "NONE" \
+                                                and audio_btn_var.get() == "NONE":
+                                                    part_type = '-- VIDEO --'
+                                                    floatnum = "3.0"
                                     self.quit_win()
 
                             except self._downloadError or self._FFmpegPostProcessorError or Exception:
                                 logger.exception(msg='\n{} was unable to convert to {} due to no available formats otherwise an unknown error.\n'
-                                           .format(_url[index], video_ops.get('merge_output_format')))
+                                           .format(_url_holder, video_ops.get('merge_output_format')))
                                 video_ops.pop('merge_output_format')
                                 video_ops.update(nooverwrites=False, ext='{}'.format(ext_btn_var.get().lower()))
                                 with yt.YoutubeDL(video_ops) as ytk:
                                     try:
                                         if len(_url) == 1:
-                                            ytd.download([_url[0]])
+                                            ytd.download([_url_holder])
                                         if len(_url) > 1:
-                                            for i in range(len(list(_url))):
-                                                if download_count == max_downloads:
+                                            for index, link in enumerate(_url):
+                                                if index == max_downloads:
                                                     print("\n\n[info] Maximum number of downloaded files reached!")
                                                     print("[info] Maximum number of downloaded files reached!")
                                                     print("[info] Maximum number of downloaded files reached!\n\n")
-                                                    download_call.quit_win()
+                                                    self.quit_win()
                                                 else:
                                                     thread = threading.Event()
                                                     thread.wait(wait_time)
-                                                    ytd.download([_url[index]])
-                                                    _url.pop(index)
-                                                    print("\nDownload [{}] completed\n".format(video_download))
-                                                    video_download += 1
-                                            video_download = 1
-                                            download_call.quit_win()
+                                                    ytd.download([_url_holder])
+                                                    print("\nDownload [{}] completed\n".format(index+1))
+                                                    _url_holder = next(_url_iterator)
+                                                    if quality_btn_var.get() != "NONE" \
+                                                            and audio_btn_var.get() != "NONE":
+                                                        part_type = '-- VIDEO --'
+                                                        floatnum = "3.0"
+
+                                                    elif quality_btn_var.get() == "NONE" \
+                                                            and audio_btn_var.get() != "NONE":
+                                                        part_type = '-- AUDIO --'
+                                                        floatnum = "3.0"
+
+                                                    elif quality_btn_var.get() != "NONE" \
+                                                            and audio_btn_var.get() == "NONE":
+                                                        part_type = '-- VIDEO --'
+                                                        floatnum = "3.0"
+                                            self.quit_win()
                                     except Exception as exc:
                                         logger.exception('\nCRITICAL : an error occured and was unable to merge... error: %s\n' % exc)
-                                        download_call.quit_win()
+                                        self.quit_win()
 
                                     finally:
                                         print("\nDownload COMPLETE!\n")
-                                        download_call.quit_win()
+                                        self.quit_win()
                             finally:
                                 print("\nDownload COMPLETE!\n")
-                                download_call.quit_win()
+                                self.quit_win()
 
                 elif quality_btn_var.get() == "NONE" \
                     and audio_btn_var.get() != "NONE":
@@ -2554,26 +2574,38 @@ class DownloadConversion(yt.YoutubeDL):
                             with yt.YoutubeDL(video_ops) as ytd:
                                 try:
                                     if len(_url) == 1:
-                                        ytd.download([_url[0]])
+                                        ytd.download([_url_holder])
                                     if len(_url) > 1:
-                                        for i in range(len(list(_url))):
-                                            if download_count == max_downloads:
+                                        for index, link in enumerate(_url):
+                                            if index == max_downloads:
                                                 print("\n\n[info] Maximum number of downloaded files reached!")
                                                 print("[info] Maximum number of downloaded files reached!")
                                                 print("[info] Maximum number of downloaded files reached!\n\n")
-                                                download_call.quit_win()
+                                                self.quit_win()
                                             else:
                                                 thread = threading.Event()
                                                 thread.wait(wait_time)
-                                                ytd.download([_url[index]])
-                                                _url.pop(index)
-                                                print("\nDownload [{}] completed\n".format(video_download))
-                                                video_download += 1
-                                        video_download = 1
-                                        download_call.quit_win()
+                                                ytd.download([_url_holder])
+                                                print("\nDownload [{}] completed\n".format(index+1))
+                                                _url_holder = next(_url_iterator)
+                                                if quality_btn_var.get() != "NONE" \
+                                                        and audio_btn_var.get() != "NONE":
+                                                    part_type = '-- VIDEO --'
+                                                    floatnum = "3.0"
+
+                                                elif quality_btn_var.get() == "NONE" \
+                                                        and audio_btn_var.get() != "NONE":
+                                                    part_type = '-- AUDIO --'
+                                                    floatnum = "3.0"
+
+                                                elif quality_btn_var.get() != "NONE" \
+                                                        and audio_btn_var.get() == "NONE":
+                                                    part_type = '-- VIDEO --'
+                                                    floatnum = "3.0"
+                                        self.quit_win()
                                 except self._downloadError or self._FFmpegPostProcessorError or Exception:
                                     logger.exception(msg='\n{} was unable to convert to {} due to no available formats otherwise an unknown error.\n'
-                                               .format(_url[index], video_ops.get('merge_output_format')))
+                                               .format(_url_holder, video_ops.get('merge_output_format')))
                                     video_ops.update(postprocessors=[{
                                         "key": 'FFmpegExtractAudio',
                                         "preferredcodec": 'wav'
@@ -2581,33 +2613,45 @@ class DownloadConversion(yt.YoutubeDL):
                                     with yt.YoutubeDL(video_ops) as ytk:
                                         try:
                                             if len(_url) == 1:
-                                                ytk.download([_url[0]])
+                                                ytk.download([_url_holder])
                                             if len(_url) > 1:
-                                                for i in range(len(list(_url))):
-                                                    if download_count == max_downloads:
+                                                for index, link in enumerate(_url):
+                                                    if index == max_downloads:
                                                         print("\n\n[info] Maximum number of downloaded files reached!")
                                                         print("[info] Maximum number of downloaded files reached!")
                                                         print("[info] Maximum number of downloaded files reached!\n\n")
-                                                        download_call.quit_win()
+                                                        self.quit_win()
                                                     else:
                                                         thread = threading.Event()
                                                         thread.wait(wait_time)
-                                                        ytk.download([_url[index]])
-                                                        _url.pop(index)
-                                                        print("\nDownload [{}] completed\n".format(video_download))
-                                                        video_download += 1
-                                                video_download = 1
-                                                download_call.quit_win()
+                                                        ytk.download([_url_holder])
+                                                        print("\nDownload [{}] completed\n".format(index+1))
+                                                        _url_holder = next(_url_iterator)
+                                                        if quality_btn_var.get() != "NONE" \
+                                                                and audio_btn_var.get() != "NONE":
+                                                            part_type = '-- VIDEO --'
+                                                            floatnum = "3.0"
+
+                                                        elif quality_btn_var.get() == "NONE" \
+                                                                and audio_btn_var.get() != "NONE":
+                                                            part_type = '-- AUDIO --'
+                                                            floatnum = "3.0"
+
+                                                        elif quality_btn_var.get() != "NONE" \
+                                                                and audio_btn_var.get() == "NONE":
+                                                            part_type = '-- VIDEO --'
+                                                            floatnum = "3.0"
+                                                self.quit_win()
                                         except Exception as exc:
                                             logger.exception(msg='\nCRITICAL : an error occured and was unable to merge/download... error: %s\n' % exc)
-                                            download_call.quit_win()
+                                            self.quit_win()
 
                                         finally:
                                             print("\nDownload COMPLETE!\n")
-                                            download_call.quit_win()
+                                            self.quit_win()
                                 finally:
                                     print("\nDownload COMPLETE!\n")
-                                    download_call.quit_win()
+                                    self.quit_win()
 
                         elif ext_btn_var.get() == ext_btn_options[5]:
                             video_ops.update(postprocessors=[{
@@ -2617,10 +2661,10 @@ class DownloadConversion(yt.YoutubeDL):
                             with yt.YoutubeDL(video_ops) as ytd:
                                 try:
                                     if len(_url) == 1:
-                                        ytd.download([_url[0]])
+                                        ytd.download([_url_holder])
                                     if len(_url) > 1:
-                                        for i in range(len(list(_url))):
-                                            if download_count == max_downloads:
+                                        for index, link in enumerate(_url):
+                                            if index == max_downloads:
                                                 print("\n\n[info] Maximum number of downloaded files reached!")
                                                 print("[info] Maximum number of downloaded files reached!")
                                                 print("[info] Maximum number of downloaded files reached!\n\n")
@@ -2628,15 +2672,27 @@ class DownloadConversion(yt.YoutubeDL):
                                             else:
                                                 thread = threading.Event()
                                                 thread.wait(wait_time)
-                                                ytd.download([_url[index]])
-                                                _url.pop(index)
-                                                print("\nDownload [{}] completed\n".format(video_download))
-                                                video_download += 1
-                                        video_download = 1
-                                        download_call.quit_win()
+                                                ytd.download([_url_holder])
+                                                print("\nDownload [{}] completed\n".format(index+1))
+                                                _url_holder = next(_url_iterator)
+                                                if quality_btn_var.get() != "NONE" \
+                                                        and audio_btn_var.get() != "NONE":
+                                                    part_type = '-- VIDEO --'
+                                                    floatnum = "3.0"
+
+                                                elif quality_btn_var.get() == "NONE" \
+                                                        and audio_btn_var.get() != "NONE":
+                                                    part_type = '-- AUDIO --'
+                                                    floatnum = "3.0"
+
+                                                elif quality_btn_var.get() != "NONE" \
+                                                        and audio_btn_var.get() == "NONE":
+                                                    part_type = '-- VIDEO --'
+                                                    floatnum = "3.0"
+                                        self.quit_win()
                                 except self._downloadError or self._FFmpegPostProcessorError or Exception:
                                     logger.exception(msg='\n{} was unable to convert to {} due to no available formats otherwise an unknown error.\n'
-                                               .format(_url[index], video_ops.get('merge_output_format')))
+                                               .format(_url_holder, video_ops.get('merge_output_format')))
                                     video_ops.update(postprocessors=[{
                                         "key": 'FFmpegExtractAudio',
                                         "preferredcodec": 'mp3'
@@ -2644,32 +2700,44 @@ class DownloadConversion(yt.YoutubeDL):
                                     with yt.YoutubeDL(video_ops) as ytk:
                                         try:
                                             if len(_url) == 1:
-                                                ytk.download([_url[0]])
+                                                ytk.download([_url_holder])
                                             if len(_url) > 1:
-                                                for i in range(len(list(_url))):
-                                                    if download_count == max_downloads:
+                                                for index, link in enumerate(_url):
+                                                    if index == max_downloads:
                                                         print("\n\n[info] Maximum number of downloaded files reached!")
                                                         print("[info] Maximum number of downloaded files reached!")
                                                         print("[info] Maximum number of downloaded files reached!\n\n")
-                                                        download_call.quit_win()
+                                                        self.quit_win()
                                                     else:
                                                         thread = threading.Event()
                                                         thread.wait(wait_time)
-                                                        ytk.download([_url[index]])
-                                                        _url.pop(index)
-                                                        print("\nDownload [{}] completed\n".format(video_download))
-                                                        video_download += 1
-                                                video_download = 1
+                                                        ytk.download([_url_holder])
+                                                        print("\nDownload [{}] completed\n".format(index+1))
+                                                        _url_holder = next(_url_iterator)
+                                                        if quality_btn_var.get() != "NONE" \
+                                                                and audio_btn_var.get() != "NONE":
+                                                            part_type = '-- VIDEO --'
+                                                            floatnum = "3.0"
+
+                                                        elif quality_btn_var.get() == "NONE" \
+                                                                and audio_btn_var.get() != "NONE":
+                                                            part_type = '-- AUDIO --'
+                                                            floatnum = "3.0"
+
+                                                        elif quality_btn_var.get() != "NONE" \
+                                                                and audio_btn_var.get() == "NONE":
+                                                            part_type = '-- VIDEO --'
+                                                            floatnum = "3.0"
                                         except Exception as exc:
                                             logger.exception(msg='\nCRITICAL : an error occured and was unable to merge/download... error: %s\n' % exc)
-                                            download_call.quit_win()
+                                            self.quit_win()
 
                                         finally:
                                             print("\nDownload COMPLETE!\n")
-                                            download_call.quit_win()
+                                            self.quit_win()
                                 finally:
                                     print("\nDownload COMPLETE!\n")
-                                    download_call.quit_win()
+                                    self.quit_win()
 
                 elif audio_btn_var.get() == "NONE" \
                     and quality_btn_var.get() != "NONE":
@@ -2677,43 +2745,55 @@ class DownloadConversion(yt.YoutubeDL):
                         with yt.YoutubeDL(video_ops) as ytd:
                             try:
                                 if len(_url) == 1:
-                                    ytd.download([_url[0]])
+                                    ytd.download([_url_holder])
                                     t = threading.Event()
                                     t.wait(1)
                                 if len(_url) > 1:
-                                    for i in range(len(list(_url))):
-                                        if download_count == max_downloads:
+                                    for index, link in enumerate(_url):
+                                        if index == max_downloads:
                                             print("\n\n[info] Maximum number of downloaded files reached!")
                                             print("[info] Maximum number of downloaded files reached!")
                                             print("[info] Maximum number of downloaded files reached!\n\n")
-                                            download_call.quit_win()
+                                            self.quit_win()
                                         else:
                                             thread = threading.Event()
                                             thread.wait(wait_time)
-                                            ytd.download([_url[index]])
+                                            ytd.download([_url_holder])
                                             t = threading.Event()
                                             t.wait(1)
-                                            _url.pop(index)
-                                            print("\nDownload [{}] completed\n".format(video_download))
-                                            video_download += 1
-                                    video_download = 1
-                                    download_call.quit_win()
+                                            print("\nDownload [{}] completed\n".format(index+1))
+                                            _url_holder = next(_url_iterator)
+                                            if quality_btn_var.get() != "NONE" \
+                                                and audio_btn_var.get() != "NONE":
+                                                    part_type = '-- VIDEO --'
+                                                    floatnum = "3.0"
+
+                                            elif quality_btn_var.get() == "NONE" \
+                                                and audio_btn_var.get() != "NONE":
+                                                    part_type = '-- AUDIO --'
+                                                    floatnum = "3.0"
+
+                                            elif quality_btn_var.get() != "NONE" \
+                                                and audio_btn_var.get() == "NONE":
+                                                    part_type = '-- VIDEO --'
+                                                    floatnum = "3.0"
+                                    self.quit_win()
 
                             except self._downloadError or self._FFmpegPostProcessorError or Exception:
                                 logger.exception(msg='\n{} was unable to convert to {} due to no available formats otherwise an unknown error.\n'
-                                           .format(_url[index], video_ops.get('merge_output_format')))
+                                           .format(_url_holder, video_ops.get('merge_output_format')))
                                 video_ops.pop('merge_output_format')
-                                extract = ydl.extract_info(_url[0], download=False)
+                                extract = ydl.extract_info(_url[_url_holder], download=False)
                                 with yt.YoutubeDL(video_ops) as ytk:
                                     try:
                                         if len(_url) == 1:
                                             video_ops.update(outtmpl=destination_var.get() + '/%(title)s.%(ext)s')
-                                            ytk.download([_url[0]])
+                                            ytk.download([_url_holder])
                                             t = threading.Event()
                                             t.wait(1)
                                         if len(_url) > 1:
-                                            for i in range(len(list(_url))):
-                                                if download_count == max_downloads:
+                                            for index, link in enumerate(_url):
+                                                if index == max_downloads:
                                                     print("\n\n[info] Maximum number of downloaded files reached!")
                                                     print("[info] Maximum number of downloaded files reached!")
                                                     print("[info] Maximum number of downloaded files reached!\n\n")
@@ -2722,29 +2802,41 @@ class DownloadConversion(yt.YoutubeDL):
                                                     thread = threading.Event()
                                                     thread.wait(wait_time)
                                                     video_ops.update(outtmpl=destination_var.get() + '/%(title)s.%(ext)s')
-                                                    ytk.download([_url[index]])
+                                                    ytk.download([_url_holder])
                                                     t = threading.Event()
                                                     t.wait(1)
-                                                    _url.pop(index)
-                                                    print("\nDownload [{}] completed\n".format(video_download))
-                                                    video_download += 1
-                                            video_download = 1
-                                            download_call.quit_win()
+                                                    print("\nDownload [{}] completed\n".format(index+1))
+                                                    _url_holder = next(_url_iterator)
+                                                    if quality_btn_var.get() != "NONE" \
+                                                            and audio_btn_var.get() != "NONE":
+                                                        part_type = '-- VIDEO --'
+                                                        floatnum = "3.0"
+
+                                                    elif quality_btn_var.get() == "NONE" \
+                                                            and audio_btn_var.get() != "NONE":
+                                                        part_type = '-- AUDIO --'
+                                                        floatnum = "3.0"
+
+                                                    elif quality_btn_var.get() != "NONE" \
+                                                            and audio_btn_var.get() == "NONE":
+                                                        part_type = '-- VIDEO --'
+                                                        floatnum = "3.0"
+                                            self.quit_win()
 
                                     except Exception as exc:
                                         logger.exception(msg='\nCRITICAL : an error occured and was unable to merge/download... error: %s\n' % exc)
-                                        download_call.quit_win()
+                                        self.quit_win()
 
                                     finally:
                                         print("\nDownload COMPLETE!\n")
-                                        download_call.quit_win()
+                                        self.quit_win()
                             finally:
                                 print("\nDownload COMPLETE!\n")
-                                download_call.quit_win()
+                                self.quit_win()
             finally:
                 if len(_url) < 1:
                     pass
-                elif not _url[0].startswith('https://'):
+                elif not _url[0].startswith(('https://', 'http://', 'file://')):
                     pass
                 else:
                     print("\nDownload COMPLETE!\n")
@@ -2808,6 +2900,7 @@ class DownloadConversion(yt.YoutubeDL):
         new_win_thread.start()
 
     def on_window(self):
+        video_ops.update(no_color=True)
         window_thread = threading.Thread(target=self.window)
         window_thread.start()
 
@@ -2824,7 +2917,7 @@ class DownloadConversion(yt.YoutubeDL):
         get_urls_thread.start()
 
 
-class MyLogger(object):
+class MyLogger:
 
     @staticmethod
     def debug(msg):

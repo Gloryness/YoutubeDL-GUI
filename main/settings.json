@@ -1,0 +1,94 @@
+{
+   "options": [
+      {
+         "file": {
+            "outtmpl": "%(title)s.%(ext)s",
+            "writedescription": false,
+            "writeinfojson": false,
+            "writeannotations": false,
+            "writethumbnail": false,
+            "write_all_thumbnails": false,
+            "writesubtitles": false,
+            "writeautomaticsub": false,
+            "listsubtitles": false,
+            "cachedir": false,
+            "nooverwrites": false,
+            "restrictfilenames": false,
+            "cookiefile": null
+         }
+      },
+      {
+         "download": {
+            "prefer_ffmpeg": true,
+            "hls_prefer_native": false,
+            "nopart": false,
+            "include_ads": false,
+            "keep_fragments": false,
+            "playlistrandom": false,
+            "noplaylist": false,
+            "playlistreverse": false,
+            "playlist_items": null,
+            "max_filesize": null,
+            "playliststart": null,
+            "playlistend": null,
+            "ratelimit": "4.2M",
+            "external_downloader": "Default",
+            "ffmpeg_location": null
+         }
+      },
+      {
+         "other": {
+            "username": null,
+            "twofactor": null,
+            "password": null,
+            "videopassword": null,
+            "netrc": false,
+            "no_warnings": false,
+            "skip_download": false,
+            "ignoreerrors": false,
+            "youtube_include_dash_manifest": false,
+            "noresizebuffer": false,
+            "extract_flat": false,
+            "age_limit": null,
+            "min_views": null,
+            "max_views": null,
+            "matchtitle": false,
+            "rejecttitle": false,
+            "rm_cachedir": false,
+            "verbose": false,
+            "keepvideo": false,
+            "no_check_certificate": false,
+            "max_downloads": 9999999,
+            "time_between_downloads": 1.75
+         }
+      }
+   ],
+   "settings": [
+      {
+         "general": {
+            "initialdir": null,
+            "disable_done_messagebox": false,
+            "auto_fill_destination": null,
+            "disabled_editformat_messagebox": false,
+            "auto_format_and_click": false,
+            "formats": ["1080p", "1441k", "MP4", "Auto-Click"]
+         }
+      },
+      {
+         "selenium": {
+            "browser": "Firefox",
+            "path": null,
+            "link": "https://www.youtube.com/"
+         }
+      },
+      {
+         "config": {
+            "name": "settings",
+            "dont_save_file_options": false,
+            "dont_save_download_options": false,
+            "dont_save_other_options": false,
+            "dont_save_settings": false
+         }
+      }
+   ]
+}

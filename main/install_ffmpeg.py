@@ -69,7 +69,7 @@ class InstallFFmpeg(object):
         self.link = 'https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-4.2.3-win64-static.zip'
         self.size = ''
 
-    def on_installation(self):
+    def on_ffmpeg_window(self):
         thread = threading.Thread(target=self.ffmpeg_window)
         thread.start()
 
@@ -333,12 +333,12 @@ class InstallFFmpeg(object):
             except AttributeError:
                 t = threading.Event()
                 t.wait(2.8)
-                self.install_btn.config(state=ACTIVE)
+                self.install_btn.config(state=NORMAL)
                 self.textbox.insert(END, "Extraction was a complete success.\n\nFFmpeg has successfully been downloaded.")
                 self.textbox.config(state=DISABLED)
                 zipfile.close()
             except not AttributeError as exc:
-                self.install_btn.config(state=ACTIVE)
+                self.install_btn.config(state=NORMAL)
                 self.textbox.config(state=NORMAL)
                 self.textbox.insert(END, "\nAn error occured and the error has been logged to downloading.log\n")
                 self.textbox.config(state=DISABLED)
@@ -346,7 +346,7 @@ class InstallFFmpeg(object):
         else:
             t = threading.Event()
             t.wait(1.2)
-            self.install_btn.config(state=ACTIVE)
+            self.install_btn.config(state=NORMAL)
             self.textbox.insert(END, "\nFFmpeg has successfully been downloaded.\n")
             self.textbox.config(state=DISABLED)
 
@@ -356,19 +356,18 @@ class InstallFFmpeg(object):
         thread.start()
 
     def install(self):
-
         self.textbox.config(state=NORMAL)
         self.textbox.delete(0.0, "end")
         self.textbox.insert(0.0, "Downloading contents...\n")
         self.textbox.config(state=DISABLED)
 
         t = threading.Event()
-        t.wait(1)
+        t.wait(0.5)
         try:
             self.r = requests.get(self.link)
         except Exception as exc:
             self.textbox.config(state=NORMAL)
-            self.install_btn.config(state=ACTIVE)
+            self.install_btn.config(state=NORMAL)
             self.textbox.insert(END, "\nAn error occured and the error has been logged to downloading.log\n")
             self.textbox.config(state=DISABLED)
             logger.exception(f'An error occured while grabbing FFmpeg installation data: {exc}')
