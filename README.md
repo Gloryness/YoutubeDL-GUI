@@ -16,7 +16,10 @@ Featuring:
 * Jump to the Destination Folder easily
 
 # Images
+* Main Screen
 
 ![](main/images/%23gui.png)
+
+* Install FFmpeg tool
 
 ![](main/images/%23gui2.png)
