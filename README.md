@@ -15,4 +15,4 @@ Featuring:
 * You can Update Youtube-DL via the GUI.
 * Jump to the Destination Folder easily
 
-![](images/#gui.png)
+![](main/images/%23gui.png)
