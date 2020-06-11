@@ -22,3 +22,6 @@ Featuring:
 * Install FFmpeg tool
 
 ![](main/images/%23gui2.png)
+* File Options
+
+![](main/images/%23gui3.png)
