@@ -13,3 +13,6 @@ Featuring:
 ------------------------------------------------------------------------------------------------
 * You can Install FFmpeg via the GUI.
 * You can Update Youtube-DL via the GUI.
+* Jump to the Destination Folder easily
+
+![](main/images/#gui)
