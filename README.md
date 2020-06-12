@@ -1,6 +1,10 @@
-# Youtube-DL GUI
-
-<a href="download/" download="YTDL.exe"><img src="main/images/%23app.ico" /></a>
+<p align="center">
+  <h3 align="center">Youtube-DL GUI</h3>
+  
+  <p align="center">
+    <a href="download/" download="YTDL.exe"><img src="main/images/%23app.ico" /></a>
+  </p>
+</p>
 ------------------------------------------------------------------------------------------------
 
 A Youtube-DL GUI by Gloryness. This is a project I made and I'm very proud of it. 
