@@ -1,4 +1,8 @@
 # Youtube-DL GUI
+
+<a href="download/" download="YTDL.exe"><img src="main/images/%23app.ico" /></a>
+------------------------------------------------------------------------------------------------
+
 A Youtube-DL GUI by Gloryness. This is a project I made and I'm very proud of it. 
 
 This is a project I made with the youtube-dl module, where you can easily download videos and set the destination folder for it.
@@ -14,8 +18,6 @@ Featuring:
 * You can Install FFmpeg via the GUI.
 * You can Update Youtube-DL via the GUI.
 * Jump to the Destination Folder easily
-
-<a href="/download/Youtube-DL GUI.exe" download="YTDL.exe"><img src="main/images/%23app.ico" /></a>
 
 # Images
 * Main Screen
