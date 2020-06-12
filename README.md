@@ -15,6 +15,8 @@ Featuring:
 * You can Update Youtube-DL via the GUI.
 * Jump to the Destination Folder easily
 
+ <a href="https://raw.githubusercontent.com/Gloryness/YoutubeDL-GUI/master/download/"> Download Link</a> 
+
 # Images
 * Main Screen
 
