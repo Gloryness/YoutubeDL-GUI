@@ -33,7 +33,9 @@ Unlike most GUI's, this has settings and options.
 * You can Update Youtube-DL via the GUI.
 * Jump to the Destination Folder easily
 
+## How To Use / Download Exe (if you want)
 
+It's simple, there is a download folder containing a .exe file which then contains all the folders and with a already converted exe file. After that, load it up and select your format and then click 'Done'. Enter the URL(s) on a new line each url, and then click 'Download'. You may also choose the option mid-download to 'Kill Operation'.
 
 ## Images:
 * Main Screen
