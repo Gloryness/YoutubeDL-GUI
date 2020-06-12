@@ -15,7 +15,7 @@ Featuring:
 * You can Update Youtube-DL via the GUI.
 * Jump to the Destination Folder easily
 
- <a href="https://github.com/Gloryness/YoutubeDL-GUI/tree/master/download" download="Youtube-DL GUI">Download Link</a> 
+ <a href="https://github.com/Gloryness/YoutubeDL-GUI/tree/master/download" download="Youtube-DL GUI.exe">Download Link</a> 
 
 # Images
 * Main Screen
