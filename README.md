@@ -15,7 +15,7 @@ Featuring:
 * You can Update Youtube-DL via the GUI.
 * Jump to the Destination Folder easily
 
-<a href="/download/Youtube-DL GUI.exe" download="YTDL.exe"><img src="main/images/#app.ico" /></a>
+<a href="/download/Youtube-DL GUI.exe" download="YTDL.exe"><img src="main/images/%23app.ico" /></a>
 
 # Images
 * Main Screen
