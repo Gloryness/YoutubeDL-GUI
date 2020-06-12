@@ -1,9 +1,16 @@
-<p align="center">  
-  <p align="center">
-    <a href="download/" download="YTDL.exe"><img src="main/images/%23app.ico" /></a>
-  </p>
-  
+<p align="center">
+  <a href="download/" download="YTDL.exe"><img src="main/images/%23app.ico" /></a>
   <h3 align="center">Youtube-DL GUI</h3>
+  <p align="center">
+    Download videos freely with this simple GUI.
+    <br />
+    <br />
+    <a href="https://github.com/Gloryness/YoutubeDL-GUI/issues">Report Bug</a>
+    ·
+    <a href="https://github.com/Gloryness/YoutubeDL-GUI/issues">Request Feature</a>
+    ·
+    <a href="https://github.com/Gloryness/YoutubeDL-GUI/pulls">Send a Pull Request</a>
+  </p>
 </p>
 
 ## About the Project
