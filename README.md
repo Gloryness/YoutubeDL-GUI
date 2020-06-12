@@ -29,12 +29,13 @@ Unlike most GUI's, this has settings and options.
 * Download Options (involving the download)
 * Other Options (auth, restrictions, more)
 * Settings (selenium settings for 'Detect URLs', general settings and config settings for .json)
-------------------------------------------------------------------------------------------------
 * You can Install FFmpeg via the GUI.
 * You can Update Youtube-DL via the GUI.
 * Jump to the Destination Folder easily
 
-# Images
+
+
+## Images:
 * Main Screen
 
 ![](main/images/%23gui.png)
