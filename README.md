@@ -31,6 +31,7 @@ Unlike most GUI's, this has settings and options.
 * Settings (selenium settings for 'Detect URLs', general settings and config settings for .json)
 * You can Install FFmpeg via the GUI.
 * You can Update Youtube-DL via the GUI.
+* Every input is built with .JSON input so whatever you do, stays right there. (if you want it to!)
 * Jump to the Destination Folder easily
 
 ## How To Use / Download Exe (if you want)
