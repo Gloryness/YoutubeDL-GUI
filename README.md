@@ -42,7 +42,7 @@ Unlike most GUI's, this has settings and options.
 
 - You can also install a WebDriver located in 'Tools' for the option 'Detect URLs' as that uses selenium. NOTE: If you use Firefox, you can set your Firefox Profile in settings.
 
-<a href="download/" download="YTDL.exe"> Download Link<a/>
+<a href="https://github.com/Gloryness/YoutubeDL-GUI/raw/master/download/Youtube-DL%20GUI.exe" download="YTDL.exe"> Download Link<a/>
 
 ## Images:
 * Main Screen
