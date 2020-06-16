@@ -19,7 +19,7 @@ class AllExtractors:
         self.extractors.remove('twitch.py')
 
         '''
-        List Comprehension!
+        List Comprehension
         '''
         self.extractors = [element.replace('.py', '') for element in self.extractors]  # replace .py with nothing
         self.extractors = [element.replace(element, valid %element) for element in self.extractors]
@@ -29,7 +29,6 @@ class AllExtractors:
         self.extractors.append('https://www.youtube.com/watch?v=')
         self.extractors.append('https://uk.news.yahoo.com')
         self.extractors.append('https://store.steampowered.com')
-        self.extractors.append('https://www.pornhubpremium.com')
         self.extractors.append('https://twitter.com')
         self.extractors.append('https://twitch.tv')
 

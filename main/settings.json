@@ -14,12 +14,12 @@
             "cachedir": false,
             "nooverwrites": false,
             "restrictfilenames": false,
-            "cookiefile": null
+            "cookiefile": ""
          }
       },
       {
          "download": {
-            "prefer_ffmpeg": true,
+            "prefer_avconv": false,
             "hls_prefer_native": false,
             "nopart": false,
             "include_ads": false,
@@ -27,21 +27,21 @@
             "playlistrandom": false,
             "noplaylist": false,
             "playlistreverse": false,
-            "playlist_items": null,
-            "max_filesize": null,
-            "playliststart": null,
-            "playlistend": null,
+            "playlist_items": "",
+            "max_filesize": "",
+            "playliststart": "",
+            "playlistend": "",
             "ratelimit": "4.2M",
             "external_downloader": "Default",
-            "ffmpeg_location": null
+            "ffmpeg_location": ""
          }
       },
       {
          "other": {
-            "username": null,
-            "twofactor": null,
-            "password": null,
-            "videopassword": null,
+            "username": "",
+            "twofactor": "",
+            "password": "",
+            "videopassword": "",
             "netrc": false,
             "no_warnings": false,
             "skip_download": false,
@@ -49,9 +49,9 @@
             "youtube_include_dash_manifest": false,
             "noresizebuffer": false,
             "extract_flat": false,
-            "age_limit": null,
-            "min_views": null,
-            "max_views": null,
+            "age_limit": "",
+            "min_views": "",
+            "max_views": "",
             "matchtitle": false,
             "rejecttitle": false,
             "rm_cachedir": false,
@@ -66,28 +66,66 @@
    "settings": [
       {
          "general": {
-            "initialdir": null,
+            "initialdir": "C:/",
             "disable_done_messagebox": false,
-            "auto_fill_destination": null,
+            "auto_fill_destination": "",
             "disabled_editformat_messagebox": false,
             "auto_format_and_click": false,
-            "formats": ["1080p", "1441k", "MP4", "Auto-Click"]
+            "formats": [
+               "1080p",
+               "1441k",
+               "MP4",
+               "Auto-Click"
+            ]
          }
       },
       {
          "selenium": {
             "browser": "Firefox",
-            "path": null,
+            "path": "",
+            "profile": "",
             "link": "https://www.youtube.com/"
          }
       },
       {
          "config": {
-            "name": "settings",
+            "name": "settings.json",
             "dont_save_file_options": false,
             "dont_save_download_options": false,
-            "dont_save_other_options": false,
-            "dont_save_settings": false
+            "dont_save_other_options": false
+         }
+      }
+   ],
+   "settings_sync": [
+      {
+         "general": {
+            "initialdir": "C:/",
+            "disable_done_messagebox": false,
+            "auto_fill_destination": "",
+            "disabled_editformat_messagebox": false,
+            "auto_format_and_click": false,
+            "formats": [
+               "1080p",
+               "1441k",
+               "MP4",
+               "Auto-Click"
+            ]
+         }
+      },
+      {
+         "selenium": {
+            "browser": "Firefox",
+            "path": "",
+            "profile": "",
+            "link": "https://www.youtube.com/"
+         }
+      },
+      {
+         "config": {
+            "name": "settings.json",
+            "dont_save_file_options": false,
+            "dont_save_download_options": false,
+            "dont_save_other_options": false
          }
       }
    ]

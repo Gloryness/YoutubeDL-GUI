@@ -52,12 +52,6 @@ def reset(win):
 class InstallFFmpeg(object):
     def __init__(self, version):
         self.version = version
-        self.browse = None
-        self.textbox = None
-        self.install_btn = None
-
-        self.r = None
-        self.root = None
 
         self.destination_var = StringVar()
         self.version_var = StringVar()
@@ -209,20 +203,15 @@ class InstallFFmpeg(object):
     def browse_cmd(self):
         if len(self.destination_var.get()) <= 1:
             destination = filedialog.askdirectory(initialdir="C:/", parent=self.root)
-        if len(self.destination_var.get()) > 1:
-            destination = filedialog.askdirectory(initialdir=self.destination_var.get(), parent=self.root)
-        if destination == "C:/" or destination == "R:/" or destination == "D:/" or destination == "P:/" or destination == "S:/" \
-            or destination == "U:/" or destination == "Q:/" or destination == "A:/" or destination == "F:/" or destination == "G:/" \
-            or destination == "B:/" or destination == "A:/" or destination == "T:/" or destination == "W:/" or destination == "Z:/" \
-                or destination == "" or len(destination) <= 2:
             self.browse.config(state=NORMAL)
             self.browse.delete(0, END)
             self.browse.insert(0, destination)
             self.browse.config(state=DISABLED)
-        else:
+        elif len(self.destination_var.get()) > 1:
+            destination = filedialog.askdirectory(initialdir=self.destination_var.get(), parent=self.root)
             self.browse.config(state=NORMAL)
             self.browse.delete(0, END)
-            self.browse.insert(0, destination+'/')
+            self.browse.insert(0, destination)
             self.browse.config(state=DISABLED)
 
     def ffmpeg_window(self):
@@ -287,17 +276,15 @@ class InstallFFmpeg(object):
             self.browse = Entry(self.root, bd=1, width=50, relief=SOLID, state=DISABLED, textvariable=self.destination_var)
             self.browse.place(x=62, y=100)
 
-            style1 = ttk.Style()
-            style1.configure('some.TButton', background='black')
+            style = ttk.Style()
+            style.configure('some.TButton', background='black')
+            style.configure('TCheckbutton', background='#cbdbfc')
 
             browse_btn = ttk.Button(self.root, text="Browse", style='some.TButton', command=self.browse_cmd)
             browse_btn.place(x=175, y=120)
 
             self.install_btn = ttk.Button(self.root, text="Download FFmpeg", style="some.TButton", command=self.on_install)
             self.install_btn.place(x=158, y=175)
-
-            style = ttk.Style()
-            style.configure('TCheckbutton', background='#cbdbfc')
 
             extract = ttk.Checkbutton(self.root, text="Extract files from .zip after download", style='TCheckbutton', variable=self.extract_var,
                                       onvalue=True, offvalue=False)
@@ -317,19 +304,24 @@ class InstallFFmpeg(object):
             pass
 
     def send_content(self):
-        with open(f'{self.destination_var.get()}{self.name}', 'wb') as install:  # since we grabbed the contents, the content was extracted in bytes - therefore we write to it in bytes.
-            install.write(self.r.content)
+        try:
+            with open(f'{self.destination_var.get()}{"/" if not self.destination_var.get().endswith("/") else ""}{self.name}', 'wb') as install:  # since we grabbed the contents, the content was extracted in bytes - therefore we write to it in bytes.
+                install.write(self.r.content)
+                self.textbox.config(state=NORMAL)
+                self.textbox.insert(END, "\nAll content has been sent to a .zip file.\n")
+                t = threading.Event()
+                t.wait(1)
+        except:
             self.textbox.config(state=NORMAL)
-            self.textbox.insert(END, "\nAll content has been sent to a .zip file.\n")
-            t = threading.Event()
-            t.wait(1)
+            self.textbox.insert(END, "\nPermission denied. Download failed.")
+            self.textbox.config(state=DISABLED)
+            quit(self.send_content)
 
         if self.extract_var.get():
             try:
-                with ZipFile(f'{self.destination_var.get()}{self.name}') as zipfile:
+                with ZipFile(f'{self.destination_var.get()}{"/" if not self.destination_var.get().endswith("/") else ""}{self.name}') as zipfile:
                     self.textbox.insert(END, "\nExtracting files from .zip file...\n")
-                    with zipfile.extractall(f'{self.destination_var.get()}') as yeet:
-                        pass
+                    zipfile.extractall(f'{self.destination_var.get()}')
             except AttributeError:
                 t = threading.Event()
                 t.wait(2.8)

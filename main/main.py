@@ -1,8 +1,9 @@
 from __future__ import unicode_literals
 
-from BorderEntry import BorderedEntry
 from valid_extractors import AllExtractors
 from install_ffmpeg import InstallFFmpeg
+from install_webdriver import InstallWebDriver
+from update import SendRequest
 from settings_window import SettingsWindow
 
 from _tkinter import TclError
@@ -12,6 +13,7 @@ from tkinter import ttk
 
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
+from cryptography.fernet import Fernet
 
 import youtube_dl as yt
 from youtube_dl import postprocessor
@@ -27,7 +29,11 @@ import threading
 import logging
 import webbrowser
 
-__version__ = '0.8.5 BETA'
+__version__ = '1.0.0'
+
+## Main Dictionary
+video_ops = {
+}
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -54,8 +60,6 @@ logger.addHandler(file_handler1)
 logger.addHandler(file_handler2)
 logger.addHandler(stream_handler)
 
-PATH = 'C:/Users/Gloryness/geckodriver.exe'
-
 root = Tk()
 root.title("Youtube-DL GUI   |   Gloryness  |  v{}".format(__version__))
 root.iconbitmap('images/#app.ico')
@@ -66,17 +70,13 @@ root.geometry("550x470")
 style1 = ttk.Style()
 style1.configure('some.TButton', background='black')
 
-style2 = ttk.Style()
-style2.configure('done.TButton', background='black', underline=1)
+style1.configure('done.TButton', background='black', underline=1)
 
-style3 = ttk.Style()
-style3.configure('option.TButton', background='black', width=7)
+style1.configure('option.TButton', background='black', width=7)
 
-style4 = ttk.Style()
-style4.configure('option1.TButton', background='black', width=9)
+style1.configure('option1.TButton', background='black', width=9)
 
-style5 = ttk.Style()
-style5.configure('dropdown.TMenubutton')
+style1.configure('dropdown.TMenubutton')
 
 all_extractors = AllExtractors()
 
@@ -114,8 +114,11 @@ root.config(menu=my_menu)
 file_menu = Menu(my_menu, tearoff=0) # tearoff gets rid of the "- - - - -" at the start
 my_menu.add_cascade(label="File", menu=file_menu)
 
-def settings():
+def init_settings():
+    global setting
     setting = SettingsWindow(__version__, download_btn, done_btn, _stabalize)
+
+def settings():
     setting.on_settings()
 
 file_menu.add_command(label="Settings", command=settings)
@@ -126,16 +129,23 @@ tools_menu = Menu(my_menu, tearoff=0)
 my_menu.add_cascade(label="Tools", menu=tools_menu)
 
 def installffmpeg():
-    a = InstallFFmpeg(__version__)
-    a.on_ffmpeg_window()
+    ffmpeg = InstallFFmpeg(__version__)
+    ffmpeg.on_ffmpeg_window()
 
-def update_youtubedl():
-    subprocess.call('pip install -U youtube-dl')
+def installwebdriver():
+    web = InstallWebDriver(__version__)
+    web.on_webdriver_window()
+
+def updategui():
+    req = SendRequest(__version__)
+    req.on_send_request()
 
 tools_menu.add_command(label="Go To Destination Folder", command=go_to)
 tools_menu.add_separator()
 tools_menu.add_command(label="Install FFmpeg", command=installffmpeg)
-tools_menu.add_command(label="Update Youtube-DL", command=update_youtubedl)
+tools_menu.add_command(label="Install WebDriver", command=installwebdriver)
+tools_menu.add_separator()
+tools_menu.add_command(label="Update GUI", command=updategui)
 
 credits_menu = Menu(my_menu, tearoff=0)
 my_menu.add_cascade(label="Credits", menu=credits_menu)
@@ -160,7 +170,6 @@ def save_browse_destination():
     else:
         return file_option.title_var.get()
 
-
 def browse():
     def onbrowse():
         """
@@ -168,31 +177,56 @@ def browse():
         """
         global video_ops
         destination.configure(state=NORMAL)
-        if len(destination_var.get()) <= 1:
-            get_directory = filedialog.askdirectory(initialdir="R:/Downloaded Videos", title="Destination")
+        with open(setting.name_of_json) as f:
+            data = json.load(f)
 
-        if len(destination_var.get()) > 1:
+        for key, value in data.items():
+            if key == 'settings':
+                for general_name, general_detail in value[0].items():
+                    pass
+        if len(destination_var.get()) <= 1:
+            get_directory = filedialog.askdirectory(initialdir=general_detail['initialdir'], title="Destination")
+
+        elif len(destination_var.get()) > 1:
             get_directory = filedialog.askdirectory(initialdir=destination_var.get(), title="Destination")
 
-        if get_directory == "C:/" or get_directory == "R:/" or get_directory == "D:/" or get_directory == "P:/" or get_directory == "S:/" \
-            or get_directory == "U:/" or get_directory == "Q:/" or get_directory == "A:/" or get_directory == "F:/" or get_directory == "G:/" \
-            or get_directory == "B:/" or get_directory == "A:/" or get_directory == "T:/" or get_directory == "W:/" or get_directory == "Z:/" \
-                or get_directory == "" or len(get_directory) <= 2:
-                destination.delete(0, END)
-                destination.insert(0, get_directory)
+        destination.delete(0, END)
+        destination.insert(0, get_directory)
 
-                video_ops.update(outtmpl='{}{}'.format(destination_var.get(), save_browse_destination()))
-                destination.configure(state=DISABLED)
-                print(video_ops, end="\n\n")
-        else:
-            destination.delete(0, END)
-            destination.insert(0, get_directory)
-
-            video_ops.update(outtmpl='{}/{}'.format(destination_var.get(), save_browse_destination()))
-            destination.configure(state=DISABLED)
-            print(video_ops, end="\n\n")
+        video_ops.update(outtmpl=f'{destination_var.get()}{"" if get_directory.endswith("/") else "/"}{save_browse_destination()}')
+        destination.configure(state=DISABLED)
+        print(video_ops, end="\n\n")
     browse_thread = threading.Thread(target=onbrowse)
     browse_thread.start()
+
+def auto_fill():
+    with open(setting.name_of_json) as f:
+        data = json.load(f)
+
+    for key, value in data.items():
+        if key == 'settings':
+            for general_name, general_detail in value[0].items():
+                pass
+            for config_name, config_detail in value[2].items():
+                pass
+    if general_detail['auto_fill_destination'] != "":
+        destination.config(state=NORMAL)
+        destination.delete(0, END)
+        destination.insert(0, general_detail['auto_fill_destination'])
+        destination.config(state=DISABLED)
+        video_ops.update(outtmpl='{}/{}'.format(destination_var.get(), save_browse_destination()))
+        print(video_ops, end="\n\n")
+
+def set_path():
+    with open(setting.name_of_json) as f:
+        data = json.load(f)
+
+    for key, value in data.items():
+        if key == 'settings':
+            for sel_name, sel_detail in value[1].items():
+                pass
+    global PATH
+    PATH = sel_detail['path']
 
 ###########################################################################
 
@@ -224,8 +258,8 @@ quality_btn_var = StringVar()
 quality_label = Label(root, text="Quality", bg="#cbdbfc", font="Cooper 15")
 quality_label.place(x=65, y=71)
 
-quality_btn = ttk.OptionMenu(root, quality_btn_var, *quality_btn_options, style='dropdown.TMenubutton')
-quality_btn.place(x=50, y=98, width=90)
+quality_dropdown = ttk.OptionMenu(root, quality_btn_var, *quality_btn_options, style='dropdown.TMenubutton')
+quality_dropdown.place(x=50, y=98, width=90)
 
 quality_btn_var.set(quality_btn_options[1])
 
@@ -245,8 +279,8 @@ audio_btn_var = StringVar()
 audio_label = Label(root, text="Audio", bg="#cbdbfc", font="Cooper 15")
 audio_label.place(x=238, y=71)
 
-audio_btn = ttk.OptionMenu(root, audio_btn_var, *audio_btn_options, style='dropdown.TMenubutton')
-audio_btn.place(x=220, y=98, width=90)
+audio_dropdown = ttk.OptionMenu(root, audio_btn_var, *audio_btn_options, style='dropdown.TMenubutton')
+audio_dropdown.place(x=220, y=98, width=90)
 
 audio_btn_var.set(audio_btn_options[1])
 
@@ -270,8 +304,8 @@ ext_btn_var = StringVar()
 ext_label = Label(root, text="Ext", bg="#cbdbfc", font="Cooper 15")
 ext_label.place(x=422, y=71)
 
-ext_btn = ttk.OptionMenu(root, ext_btn_var, *ext_btn_options, style='dropdown.TMenubutton')
-ext_btn.place(x=400, y=98, width=90)
+ext_dropdown = ttk.OptionMenu(root, ext_btn_var, *ext_btn_options, style='dropdown.TMenubutton')
+ext_dropdown.place(x=400, y=98, width=90)
 
 ext_btn_var.set(ext_btn_options[3])
 
@@ -417,23 +451,38 @@ class Updates(object):
     @staticmethod
     def update_format_btns():
         done_btn.configure(state=DISABLED)
-        style2.configure('done.TButton', bd=1)
-        quality_btn.configure(state=DISABLED)
-        audio_btn.configure(state=DISABLED)
-        ext_btn.configure(state=DISABLED)
+        style1.configure('done.TButton', bd=1)
+        quality_dropdown.configure(state=DISABLED)
+        audio_dropdown.configure(state=DISABLED)
+        ext_dropdown.configure(state=DISABLED)
 
     @staticmethod
     def edit_format_btns():
-        confirm = messagebox.askquestion("Are You Sure?", "Would you like to edit your video formats?")
-        if confirm == "yes":
+        with open(setting.name_of_json) as f:
+            data = json.load(f)
+
+        for key, value in data.items():
+            if key == 'settings':
+                for general_name, general_detail in value[0].items():
+                    pass
+        if general_detail['disabled_editformat_messagebox'] is True:
             done_btn.configure(state=NORMAL)
-            style2.configure('done.TButton', bd=2)
-            quality_btn.configure(state=NORMAL)
-            audio_btn.configure(state=NORMAL)
-            ext_btn.configure(state=NORMAL)
+            style1.configure('done.TButton', bd=2)
+            quality_dropdown.configure(state=NORMAL)
+            audio_dropdown.configure(state=NORMAL)
+            ext_dropdown.configure(state=NORMAL)
             do.disable_options()
         else:
-            pass
+            confirm = messagebox.askquestion("Are You Sure?", "Would you like to edit your video formats?")
+            if confirm == "yes":
+                done_btn.configure(state=NORMAL)
+                style1.configure('done.TButton', bd=2)
+                quality_dropdown.configure(state=NORMAL)
+                audio_dropdown.configure(state=NORMAL)
+                ext_dropdown.configure(state=NORMAL)
+                do.disable_options()
+            else:
+                pass
 
     @staticmethod
     def after_done_btn():
@@ -457,72 +506,30 @@ class Updates(object):
         edit_format.configure(state=DISABLED)
         download_btn.configure(state=DISABLED)
 
-
 do = Updates()
 
 ###########################################################################
 
-def done_btn_func():
-    def on_done_btn():
-        verify = messagebox.askquestion("Are You Sure?", "This will be your format, are you sure you want to continue?")
-        if verify == "yes":
+def click():
+    if quality_btn_var.get() == "NONE" \
+        and audio_btn_var.get() == "NONE":
+        messagebox.showerror("?????", "You have asked for no audio and no quality, therefore cannot continue.")
 
-            if quality_btn_var.get() == "NONE" \
-                and audio_btn_var.get() == "NONE":
-                    none_types = messagebox.showerror("?????", "You have asked for no audio and no quality, therefore cannot continue.")
+    elif quality_btn_var.get() == "NONE" \
+        and audio_btn_var.get() != "NONE" \
+        and ext_btn_var.get() != "MP3" \
+        and ext_btn_var.get() != "WAV" \
+        and ext_btn_var.get() != "M4A" \
+        and ext_btn_var.get() != "OGG":
+            messagebox.showerror("?????", "If you want an audio-only file, please use an MP3 or WAV or M4A or OGG extension.")
 
-            elif quality_btn_var.get() == "NONE" \
-                and audio_btn_var.get() != "NONE" \
-                and ext_btn_var.get() != "MP3" \
-                and ext_btn_var.get() != "WAV" \
-                and ext_btn_var.get() != "M4A"\
-                and ext_btn_var.get() != "OGG":
-                    none_types2 = messagebox.showerror("?????", "If you want an audio-only file, please use an MP3 or WAV or M4A or OGG extension.")
-
-            elif quality_btn_var.get() != "NONE" \
-                and audio_btn_var.get() != "NONE":
-                    if ext_btn_var.get() == "MP3" \
-                        or ext_btn_var.get() == "WAV"\
-                        or ext_btn_var.get() == "M4A"\
-                        or ext_btn_var.get() == "OGG":
-                        none_types3 = messagebox.showerror("?????", f"Sorry, but {ext_btn_var.get()} is not a supported file-type for videos.\nWell it could be, but let's act professional here.")
-                    else:
-                        thread_event = threading.Event()
-
-                        do.update_format_btns()
-                        do.after_done_btn()
-
-                        thread_event.wait(0.10)
-                        do.on_update_video()
-                        thread_event.wait(0.10)
-                        do.on_update_audio()
-                        thread_event.wait(0.10)
-                        do.on_update_both()
-                        thread_event.wait(0.10)
-                        do.on_update_ext()
-
-            elif quality_btn_var.get() != "NONE" \
-                and audio_btn_var.get() == "NONE":
-                    if ext_btn_var.get() == "MP3" \
-                        or ext_btn_var.get() == "WAV"\
-                        or ext_btn_var.get() == "M4A"\
-                        or ext_btn_var.get() == "OGG":
-                        none_types3 = messagebox.showerror("?????", f"Sorry, but {ext_btn_var.get()} is not a supported file-type for videos.")
-                    else:
-                        thread_event = threading.Event()
-
-                        do.update_format_btns()
-                        do.after_done_btn()
-
-                        thread_event.wait(0.10)
-                        do.on_update_video()
-                        thread_event.wait(0.10)
-                        do.on_update_audio()
-                        thread_event.wait(0.10)
-                        do.on_update_both()
-                        thread_event.wait(0.10)
-                        do.on_update_ext()
-
+    elif quality_btn_var.get() != "NONE" \
+        and audio_btn_var.get() != "NONE":
+            if ext_btn_var.get() == "MP3" \
+                or ext_btn_var.get() == "WAV" \
+                or ext_btn_var.get() == "M4A" \
+                or ext_btn_var.get() == "OGG":
+                    messagebox.showerror("?????", f"Sorry, but {ext_btn_var.get()} is not a supported file-type for videos.\nWell it could be, but let's act professional here.")
             else:
                 thread_event = threading.Event()
 
@@ -537,10 +544,137 @@ def done_btn_func():
                 do.on_update_both()
                 thread_event.wait(0.10)
                 do.on_update_ext()
+
+    elif quality_btn_var.get() != "NONE" \
+        and audio_btn_var.get() == "NONE":
+            if ext_btn_var.get() == "MP3" \
+                or ext_btn_var.get() == "WAV" \
+                or ext_btn_var.get() == "M4A" \
+                or ext_btn_var.get() == "OGG":
+                    messagebox.showerror("?????", f"Sorry, but {ext_btn_var.get()} is not a supported file-type for videos.")
+            else:
+                thread_event = threading.Event()
+
+                do.update_format_btns()
+                do.after_done_btn()
+
+                thread_event.wait(0.10)
+                do.on_update_video()
+                thread_event.wait(0.10)
+                do.on_update_audio()
+                thread_event.wait(0.10)
+                do.on_update_both()
+                thread_event.wait(0.10)
+                do.on_update_ext()
+
+    else:
+        thread_event = threading.Event()
+
+        do.update_format_btns()
+        do.after_done_btn()
+
+        thread_event.wait(0.10)
+        do.on_update_video()
+        thread_event.wait(0.10)
+        do.on_update_audio()
+        thread_event.wait(0.10)
+        do.on_update_both()
+        thread_event.wait(0.10)
+        do.on_update_ext()
+
+def done_btn_func():
+    def on_done_btn():
+        with open(setting.name_of_json) as f:
+            data = json.load(f)
+
+        for key, value in data.items():
+            if key == 'settings':
+                for general_name, general_detail in value[0].items():
+                    pass
+        if general_detail['disable_done_messagebox'] is True:
+            click()
         else:
-            pass
+            verify = messagebox.askquestion("Are You Sure?", "This will be your format, are you sure you want to continue?")
+            if verify == "yes":
+                click()
+            else:
+                pass
     done_btn_thread = threading.Thread(target=on_done_btn)
     done_btn_thread.start()
+
+def auto_fill_and_click_thread():
+    my_thread = threading.Timer(1.75, auto_fill_and_click)
+    my_thread.start()
+
+def auto_fill_and_click():
+    with open(setting.name_of_json) as f:
+        data = json.load(f)
+
+    for key, value in data.items():
+        if key == 'settings':
+            for general_name, general_detail in value[0].items():
+                pass
+    if general_detail['auto_format_and_click'] is True:
+        quality_btn_var.set(general_detail['formats'][0])
+        audio_btn_var.set(general_detail['formats'][1])
+        ext_btn_var.set(general_detail['formats'][2])
+        if general_detail['formats'][3] == "Auto-Click":
+            click()
+        else:
+            pass
+    else:
+        pass
+
+def check():
+    with open(setting.name_of_json) as f:
+        data = json.load(f)
+
+    for key, value in data.items():
+        if key == 'options':
+            for file_name, file_detail in value[0].items():
+                pass
+            for download_name, download_detail in value[1].items():
+                pass
+            for other_name, other_detail in value[2].items():
+                pass
+        if key == 'settings':
+            for config_name, config_detail in value[2].items():
+                pass
+    if not config_detail['dont_save_file_options']:
+        if file_detail['cachedir'] is True:
+            video_ops.update(cachedir=False)
+        if file_detail['nooverwrites'] is True:
+            video_ops.update(nooverwrites=True)
+        if file_detail['restrictfilenames'] is True:
+            video_ops.update(restrictfilenames=True)
+        if len(file_detail['cookiefile']) >= 1:
+            video_ops.update(cookiefile=file_detail['cookiefile'])
+
+    if not config_detail['dont_save_download_options']:
+        if download_detail['prefer_avconv'] is True:
+            video_ops.update(prefer_ffmpeg=False)
+        if download_detail['external_downloader'] != 'Default':
+            video_ops.update(external_downloader=download_detail['external_downloader'])
+        if len(download_detail['ffmpeg_location']) >= 1:
+            video_ops.update(ffmpeg_location=download_detail['ffmpeg_location'])
+
+    if not config_detail['dont_save_other_options']:
+        if other_detail['no_warnings'] is True:
+            video_ops.update(no_warnings=True)
+        if other_detail['ignoreerrors'] is True:
+            video_ops.update(ignoreerrors=True)
+        if other_detail['age_limit'] is True:
+            video_ops.update(age_limit=other_detail['age_limit'])
+        if other_detail['rejecttitle'] is True:
+            video_ops.update(rejecttitle=True)
+        if other_detail['keepvideo'] is True:
+            video_ops.update(keepvideo=True)
+        if other_detail['no_check_certificate'] is True:
+            video_ops.update(nocheckcertificate=True)
+        global max_downloads, wait_time
+        max_downloads = other_detail['max_downloads']
+        wait_time = other_detail['time_between_downloads']
+    print(video_ops, "CHECK\n", sep="   ")
 
 done_btn = ttk.Button(root, text="Done", style='done.TButton', command=done_btn_func)
 done_btn.place(x=228, y=154)
@@ -563,7 +697,6 @@ download_count = 1
 other_count = 1
 settings_count = 1
 _stabalize = [file_count, download_count, other_count, settings_count]
-test = True
 
 def reset_file_window(win):
     global _stabalize
@@ -603,19 +736,13 @@ class FileOptionWindow(object):
     * Filesystem Options
     """
     def __init__(self):
-        self._title = 'Youtube-DL GUI   |   Gloryness  |  v{}'.format(__version__)
+        self._title = 'File Options   |   Gloryness  |  v{}'.format(__version__)
         self._icon = 'images/#app.ico'
         self._size = '600x450'
         self.title_var = StringVar()
         self.title_menu_var = StringVar()
         self.seperator_var = StringVar()
 
-        self.var_1, self.var_2, self.var_3, self.var_4, self.var_5, self.var_6, self.var_7, self.var_8, self.var_9, self.var_10, self.var_11, self.var_12 = \
-            BooleanVar(), BooleanVar(), BooleanVar(), BooleanVar(), BooleanVar(), BooleanVar(), BooleanVar(), BooleanVar(), BooleanVar(), BooleanVar(), BooleanVar(), StringVar()
-
-        self.title_entry = None
-        self.apply_btn = None
-        self.file_win = None
         self.remember = 'id'
         self.remember2 = '.'
         self.storage = '%(title)s.%(ext)s'
@@ -655,9 +782,67 @@ class FileOptionWindow(object):
                 else:
                     pass
 
+    def add(self):
+        self.isSaved = False
+        self.title_saved = False
+        seperator = self.seperator_var.get()
+        if seperator == "Space":
+            self.apply_btn.configure(state=ACTIVE)
+            self.title_entry.configure(state=NORMAL)
+            self.title_entry.insert(END, " %(" + self.title_menu_var.get() + ")s")
+            self.length.append(str(" %(" + self.title_menu_var.get() + ")s"))
+            self.title_entry.configure(state=DISABLED)
+        elif seperator == "None":
+            self.apply_btn.configure(state=ACTIVE)
+            self.title_entry.configure(state=NORMAL)
+            self.title_entry.insert(END, "%(" + self.title_menu_var.get() + ")s")
+            self.length.append(str("%(" + self.title_menu_var.get() + ")s"))
+            self.title_entry.configure(state=DISABLED)
+        else:
+            self.apply_btn.configure(state=ACTIVE)
+            self.title_entry.configure(state=NORMAL)
+            self.title_entry.insert(END, f"{self.seperator_var.get()}%(" + self.title_menu_var.get() + ")s")
+            self.length.append(str(f"{self.seperator_var.get()}%(" + self.title_menu_var.get() + ")s"))
+            self.title_entry.configure(state=DISABLED)
+        print(self.length)
+
+    def delete(self):
+        self.isSaved = False
+        self.title_saved = False
+        self.apply_btn.configure(state=ACTIVE)
+        try:
+            self.index = len(self.length) - 1
+            self.title_entry.configure(state=NORMAL)
+            self.title_entry.delete(len(self.title_var.get()) - len(self.length[self.index]), END)
+            self.title_entry.configure(state=DISABLED)
+            self.length.pop(self.index)
+            print(self.length)
+        except IndexError:
+            self.title_entry.configure(state=NORMAL)
+            self.length.clear()
+            self.title_entry.delete(0, END)
+            self.title_entry.configure(state=DISABLED)
+
+    def update_apply_btn(self):
+        self.apply_btn.configure(state=ACTIVE)
+
+    def option_update_apply_btn(self, event):
+        self.apply_btn.configure(state=ACTIVE)
+        self.isSaved = False
+
     def file_options_window(self):
         global _stabalize
         if _stabalize[0] == 1:
+            with open(setting.name_of_json) as f:
+                data = json.load(f)
+
+            for key, value in data.items():
+                if key == 'options':
+                    for file_name, file_detail in value[0].items():
+                        pass
+                if key == 'settings':
+                    for config_name, config_detail in value[2].items():
+                        pass
             download_btn.configure(state=DISABLED)
             print(self.length)
             self.file_win = Toplevel()
@@ -707,10 +892,10 @@ class FileOptionWindow(object):
 
             self.title_menu_var.set(self.remember)
 
-            add_outtmpl = ttk.Button(self.file_win, text="ADD", style='option1.TButton', command=self.__add__)
+            add_outtmpl = ttk.Button(self.file_win, text="ADD", style='option1.TButton', command=self.add)
             add_outtmpl.place(x=230, y=75)
 
-            remove_outtmpl = ttk.Button(self.file_win, text="REMOVE", style='option1.TButton', command=self.__delete__)
+            remove_outtmpl = ttk.Button(self.file_win, text="REMOVE", style='option1.TButton', command=self.delete)
             remove_outtmpl.place(x=300, y=75)
 
             seperator_options = [
@@ -748,69 +933,108 @@ class FileOptionWindow(object):
             style = ttk.Style()
             style.configure('TCheckbutton', background='#afc2e9')
 
+            self.var_1 = BooleanVar()
             check_1 = ttk.Checkbutton(self.file_win, text="Write video description to a .description file.",
                                       variable=self.var_1, onvalue=True, offvalue=False, style='TCheckbutton', command=self.update_apply_btn)
             check_1.place(x=40, y=120)
 
+            self.var_2 = BooleanVar()
             check_2 = ttk.Checkbutton(self.file_win, text="Write video description to a .json file.",
                                       variable=self.var_2, onvalue=True, offvalue=False, style='TCheckbutton', command=self.update_apply_btn)
             check_2.place(x=40, y=150)
 
+            self.var_3 = BooleanVar()
             check_3 = ttk.Checkbutton(self.file_win, text="Write video annotations to a .xml file.",
                                       variable=self.var_3, onvalue=True, offvalue=False, style='TCheckbutton', command=self.update_apply_btn)
             check_3.place(x=40, y=180)
 
+            self.var_4 = BooleanVar()
             check_4 = ttk.Checkbutton(self.file_win, text="Write the thumbnail image to a file.",
                                       variable=self.var_4, onvalue=True, offvalue=False, style='TCheckbutton', command=self.update_apply_btn)
             check_4.place(x=40, y=210)
 
+            self.var_5 = BooleanVar()
             check_5 = ttk.Checkbutton(self.file_win, text="Write all thumbnail formats to files.",
                                       variable=self.var_5, onvalue=True, offvalue=False, style='TCheckbutton', command=self.update_apply_btn)
             check_5.place(x=40, y=240)
 
+            self.var_6 = BooleanVar()
             check_6 = ttk.Checkbutton(self.file_win, text="Write the video subtitles to a file.",
                                       variable=self.var_6, onvalue=True, offvalue=False, style='TCheckbutton', command=self.update_apply_btn)
             check_6.place(x=40, y=270)
 
+            self.var_7 = BooleanVar()
             check_7 = ttk.Checkbutton(self.file_win, text="Write the automatically generated subtitles \nto a file.",
                                       variable=self.var_7, onvalue=True, offvalue=False, style='TCheckbutton', command=self.update_apply_btn)
             check_7.place(x=304, y=110)
 
+            self.var_8 = BooleanVar()
             check_8 = ttk.Checkbutton(self.file_win, text="Lists all available subtitles for the video.",
                                       variable=self.var_8, onvalue=True, offvalue=False, style='TCheckbutton', command=self.update_apply_btn)
             check_8.place(x=304, y=150)
 
+            self.var_9 = BooleanVar()
             check_9 = ttk.Checkbutton(self.file_win, text="Disable filesystem caching",
                                       variable=self.var_9, onvalue=True, offvalue=False, style='TCheckbutton', command=self.update_apply_btn)
             check_9.place(x=304, y=180)
 
+            self.var_10 = BooleanVar()
             check_10 = ttk.Checkbutton(self.file_win, text="Do not overwrite files",
                                        variable=self.var_10, onvalue=True, offvalue=False, style='TCheckbutton', command=self.update_apply_btn)
             check_10.place(x=304, y=210)
 
+            self.var_11 = BooleanVar()
             check_11 = ttk.Checkbutton(self.file_win, text="Restrict filenames\n(do not allow spaces and '&')",
                                        variable=self.var_11, onvalue=True, offvalue=False, style='TCheckbutton', command=self.update_apply_btn)
             check_11.place(x=304, y=235)
 
-            style_1 = ttk.Style()
-            style_1.configure('TLabel', background='#afc2e9')
 
-            cookie_label = ttk.Label(self.file_win, text="Where cookies should be read from and dumpted to:", style='TLabel')
+            cookie_label = Label(self.file_win, text="Where cookies should be read from and dumpted to:", bg='#afc2e9')
             cookie_label.place(x=268, y=275)
 
-            style_2 = ttk.Style()
-            style_2.configure('TEntry', relief=SOLID, borderwidth=2)
-
-            cookie_entry = BorderedEntry(self.file_win, state=DISABLED, textvariable=self.var_12, style='TEntry', width=40, bordercolor="black")
+            self.var_12 = StringVar()
+            cookie_entry = Entry(self.file_win, state=DISABLED, relief=SOLID, width=40, textvariable=self.var_12)
             cookie_entry.place(x=280, y=295)
+
+            if not config_detail['dont_save_file_options']:
+                self.title_entry.configure(state=NORMAL)
+                self.title_entry.delete(0, END)
+                self.title_var.set(file_detail['outtmpl'])
+                self.title_entry.configure(state=DISABLED)
+                self.var_1.set(file_detail['writedescription'])
+                self.var_2.set(file_detail['writeinfojson'])
+                self.var_3.set(file_detail['writeannotations'])
+                self.var_4.set(file_detail['writethumbnail'])
+                self.var_5.set(file_detail['write_all_thumbnails'])
+                self.var_6.set(file_detail['writesubtitles'])
+                self.var_7.set(file_detail['writeautomaticsub'])
+                self.var_8.set(file_detail['listsubtitles'])
+                self.var_9.set(file_detail['cachedir'])
+                self.var_10.set(file_detail['nooverwrites'])
+                self.var_11.set(file_detail['restrictfilenames'])
+                cookie_entry.configure(state=NORMAL)
+                cookie_entry.delete(0, END)
+                self.var_12.set(file_detail['cookiefile'])
+                cookie_entry.configure(state=DISABLED)
+
+                self.apply_btn.configure(state=NORMAL)
 
             def browse():
                 self.update_apply_btn()
-                if len(self.var_12.get()) <= 1:
-                    cookie_browse = filedialog.askopenfilename(initialdir="C:/", title="Destination For Cookies", filetypes=(("all files", "*.*"), ("txt files", "*.txt")), parent=self.file_win)
+                with open(setting.name_of_json) as f:
+                    data = json.load(f)
 
-                if len(self.var_12.get()) > 1:
-                    cookie_browse = filedialog.askopenfilename(initialdir=self.var_12.get(), title="Destination For Cookies", filetypes=(("all files", "*.*"), ("txt files", "*.txt")), parent=self.file_win)
+                for key, value in data.items():
+                    if key == 'settings':
+                        for general_name, general_detail in value[0].items():
+                            pass
+                if len(self.var_12.get()) <= 1:
+                    cookie_browse = filedialog.askopenfilename(initialdir=general_detail['initialdir'], title="Destination For Cookies",
+                                                               filetypes=(("all files", "*.*"), ("txt files", "*.txt")), parent=self.file_win)
+
+                elif len(self.var_12.get()) > 1:
+                    cookie_browse = filedialog.askopenfilename(initialdir=self.var_12.get(), title="Destination For Cookies",
+                                                               filetypes=(("all files", "*.*"), ("txt files", "*.txt")), parent=self.file_win)
 
                 cookie_entry.configure(state=NORMAL)
                 cookie_entry.delete(0, END)
@@ -836,55 +1060,18 @@ class FileOptionWindow(object):
         else:
             pass
 
-    def __add__(self):
-        self.isSaved = False
-        self.title_saved = False
-        seperator = self.seperator_var.get()
-        if seperator == "Space":
-            self.apply_btn.configure(state=ACTIVE)
-            self.title_entry.configure(state=NORMAL)
-            self.title_entry.insert(END, " %(" + self.title_menu_var.get() + ")s")
-            self.length.append(str(" %(" + self.title_menu_var.get() + ")s"))
-            self.title_entry.configure(state=DISABLED)
-        elif seperator == "None":
-            self.apply_btn.configure(state=ACTIVE)
-            self.title_entry.configure(state=NORMAL)
-            self.title_entry.insert(END, "%(" + self.title_menu_var.get() + ")s")
-            self.length.append(str("%(" + self.title_menu_var.get() + ")s"))
-            self.title_entry.configure(state=DISABLED)
-        else:
-            self.apply_btn.configure(state=ACTIVE)
-            self.title_entry.configure(state=NORMAL)
-            self.title_entry.insert(END, f"{self.seperator_var.get()}%(" + self.title_menu_var.get() + ")s")
-            self.length.append(str(f"{self.seperator_var.get()}%(" + self.title_menu_var.get() + ")s"))
-            self.title_entry.configure(state=DISABLED)
-        print(self.length)
-
-    def __delete__(self):
-        self.isSaved = False
-        self.title_saved = False
-        self.apply_btn.configure(state=ACTIVE)
-        try:
-            self.index = len(self.length) - 1
-            self.title_entry.configure(state=NORMAL)
-            self.title_entry.delete(len(self.title_var.get()) - len(self.length[self.index]), END)
-            self.title_entry.configure(state=DISABLED)
-            self.length.pop(self.index)
-            print(self.length)
-        except IndexError:
-            self.title_entry.configure(state=NORMAL)
-            self.length.clear()
-            self.title_entry.delete(0, END)
-            self.title_entry.configure(state=DISABLED)
-
-    def update_apply_btn(self):
-        self.apply_btn.configure(state=ACTIVE)
-
-    def option_update_apply_btn(self, event):
-        self.apply_btn.configure(state=ACTIVE)
-        self.isSaved = False
-
     def file_apply(self):
+        with open(setting.name_of_json) as f:
+            data = json.load(f)
+
+        for key, value in data.items():
+            if key == 'options':
+                for file_name, file_detail in value[0].items():
+                    pass
+            if key == 'settings':
+                for config_name, config_detail in value[2].items():
+                    pass
+
         if len(self.title_var.get()) >= 3:
             global video_ops
             self.apply_btn.configure(state=DISABLED)
@@ -972,6 +1159,41 @@ class FileOptionWindow(object):
             else:
                 video_ops.update(cookiefile=self.var_12.get())
 
+            if not config_detail['dont_save_file_options']:
+                file_detail['outtmpl'] = self.title_var.get()
+                file_detail['writedescription'] = self.var_1.get()
+                file_detail['writeinfojson'] = self.var_2.get()
+                file_detail['writeannotations'] = self.var_3.get()
+                file_detail['writethumbnail'] = self.var_4.get()
+                file_detail['write_all_thumbnails'] = self.var_5.get()
+                file_detail['writesubtitles'] = self.var_6.get()
+                file_detail['writeautomaticsub'] = self.var_7.get()
+                file_detail['listsubtitles'] = self.var_8.get()
+                file_detail['cachedir'] = self.var_9.get()
+                file_detail['nooverwrites'] = self.var_10.get()
+                file_detail['restrictfilenames'] = self.var_11.get()
+                file_detail['cookiefile'] = self.var_12.get()
+                with open(setting.name_of_json, 'w') as f:
+                    json.dump(data, f, indent=3)
+                    f.close()
+            else:
+                file_detail['outtmpl'] = "%(title)s.%(ext)s"
+                file_detail['writedescription'] = False
+                file_detail['writeinfojson'] = False
+                file_detail['writeannotations'] = False
+                file_detail['writethumbnail'] = False
+                file_detail['write_all_thumbnails'] = False
+                file_detail['writesubtitles'] = False
+                file_detail['writeautomaticsub'] = False
+                file_detail['listsubtitles'] = False
+                file_detail['cachedir'] = False
+                file_detail['nooverwrites'] = False
+                file_detail['restrictfilenames'] = False
+                file_detail['cookiefile'] = ""
+                with open(setting.name_of_json, 'w') as f:
+                    json.dump(data, f, indent=3)
+                    f.close()
+
             sys.stderr = sys.__stderr__
             sys.stdout = sys.__stdout__
             print(video_ops, "FILE OPTIONS", sep="   ", end="\n\n")
@@ -986,7 +1208,7 @@ class DownloadOptionWindow(object):
     * Download Options
     """
     def __init__(self):
-        self._title = 'Youtube-DL GUI   |   Gloryness  |  v{}'.format(__version__)
+        self._title = 'Download Options   |   Gloryness  |  v{}'.format(__version__)
         self._icon = 'images/#app.ico'
         self._size = '600x450'
         self.apply_btn = None
@@ -1063,6 +1285,16 @@ class DownloadOptionWindow(object):
     def download_options_window(self):
         global _stabalize
         if _stabalize[1] == 1:
+            with open(setting.name_of_json) as f:
+                data = json.load(f)
+
+            for key, value in data.items():
+                if key == 'options':
+                    for download_name, download_detail in value[1].items():
+                        pass
+                if key == 'settings':
+                    for config_name, config_detail in value[2].items():
+                        pass
             download_btn.configure(state=DISABLED)
             self.download_win = Toplevel()
             self.download_win.title(self._title)
@@ -1199,6 +1431,31 @@ class DownloadOptionWindow(object):
             self.ffmpeg_location = Entry(self.download_win, width=34, state=DISABLED, relief=SOLID, textvariable=self.var_15)
             self.ffmpeg_location.place(x=314, y=290)
 
+            if not config_detail['dont_save_download_options']:
+                self.var_1.set(download_detail['prefer_avconv'])
+                self.var_2.set(download_detail['hls_prefer_native'])
+                self.var_3.set(download_detail['nopart'])
+                self.var_4.set(download_detail['include_ads'])
+                self.var_5.set(download_detail['keep_fragments'])
+                self.var_6.set(download_detail['playlistrandom'])
+                self.var_8.set(download_detail['noplaylist'])
+                self.var_7.set(download_detail['playlistreverse'])
+                self.input_entry1.delete(0, END)
+                self.input_entry1.insert(0, download_detail['playlist_items'])
+                self.input_entry2.delete(0, END)
+                self.input_entry2.insert(0, download_detail['max_filesize'])
+                self.input_entry3.delete(0, END)
+                self.input_entry3.insert(0, download_detail['playliststart'])
+                self.input_entry4.delete(0, END)
+                self.input_entry4.insert(0, download_detail['playlistend'])
+                self.var_13.set(download_detail['ratelimit'])
+                self.var_14.set(download_detail['external_downloader'])
+                self.ffmpeg_location.configure(state=NORMAL)
+                self.ffmpeg_location.delete(0, END)
+                self.ffmpeg_location.insert(0, download_detail['ffmpeg_location'])
+                self.ffmpeg_location.configure(state=DISABLED)
+                self.apply_btn.configure(state=ACTIVE)
+
             def delete_input_cmd():
                 self.apply_btn.configure(state=ACTIVE)
                 self.ffmpeg_location.configure(state=NORMAL)
@@ -1212,7 +1469,19 @@ class DownloadOptionWindow(object):
                 self.isSaved = False
 
             def on_press():
-                ask = filedialog.askopenfilename(initialdir='C:/', filetypes=(("Executable Files (.exe)", "*.exe"), ("", "*.exe")), parent=self.download_win)
+                with open(setting.name_of_json) as f:
+                    data = json.load(f)
+
+                for key, value in data.items():
+                    if key == 'settings':
+                        for general_name, general_detail in value[0].items():
+                            pass
+
+                if len(self.var_15.get()) <= 1:
+                    ask = filedialog.askopenfilename(initialdir=general_detail['initialdir'], filetypes=(("Executable Files (.exe)", "*.exe"), ("", "*.exe")), parent=self.download_win)
+
+                elif len(self.var_15.get()) >= 2:
+                    ask = filedialog.askopenfilename(initialdir=self.var_15.get(), filetypes=(("Executable Files (.exe)", "*.exe"), ("", "*.exe")), parent=self.download_win)
                 self.apply_btn.configure(state=ACTIVE)
                 self.ffmpeg_location.configure(state=NORMAL)
                 self.ffmpeg_location.delete(0, END)
@@ -1272,6 +1541,17 @@ class DownloadOptionWindow(object):
 
         self.remember_speed = self.var_13.get()
         self.remember_downloader = self.var_14.get()
+
+        with open(setting.name_of_json) as f:
+            data = json.load(f)
+
+        for key, value in data.items():
+            if key == 'options':
+                for download_name, download_detail in value[1].items():
+                    pass
+            if key == 'settings':
+                for config_name, config_detail in value[2].items():
+                    pass
 
         if self.var_1.get():
             video_ops.update(prefer_ffmpeg=False)
@@ -1476,6 +1756,45 @@ class DownloadOptionWindow(object):
         else:
             video_ops.update(ffmpeg_location=self.var_15.get())
 
+        if not config_detail['dont_save_download_options']:
+            download_detail['prefer_ffmpeg'] = self.var_1.get()
+            download_detail['hls_prefer_native'] = self.var_2.get()
+            download_detail['nopart'] = self.var_3.get()
+            download_detail['include_ads'] = self.var_4.get()
+            download_detail['keep_fragments'] = self.var_5.get()
+            download_detail['playlistrandom'] = self.var_6.get()
+            download_detail['noplaylist'] = self.var_8.get()
+            download_detail['playlistreverse'] = self.var_7.get()
+            download_detail['playlist_items'] = self.input_entry1.get()
+            download_detail['max_filesize'] = self.input_entry2.get()
+            download_detail['playliststart'] = self.input_entry3.get()
+            download_detail['playlistend'] = self.input_entry4.get()
+            download_detail['ratelimit'] = self.var_13.get()
+            download_detail['external_downloader'] = self.var_14.get()
+            download_detail['ffmpeg_location'] = self.ffmpeg_location.get()
+            with open(setting.name_of_json, 'w') as f:
+                json.dump(data, f, indent=3)
+                f.close()
+        else:
+            download_detail['prefer_ffmpeg'] = False
+            download_detail['hls_prefer_native'] = False
+            download_detail['nopart'] = False
+            download_detail['include_ads'] = False
+            download_detail['keep_fragments'] = False
+            download_detail['playlistrandom'] = False
+            download_detail['noplaylist'] = False
+            download_detail['playlistreverse'] = False
+            download_detail['playlist_items'] = ""
+            download_detail['max_filesize'] = ""
+            download_detail['playliststart'] = ""
+            download_detail['playlistend'] = ""
+            download_detail['ratelimit'] = "4.2M"
+            download_detail['external_downloader'] = "Default"
+            download_detail['ffmpeg_location'] = ""
+            with open(setting.name_of_json, 'w') as f:
+                json.dump(data, f, indent=3)
+                f.close()
+
         self.storage1 = self.input_entry1.get()
         self.storage2 = self.input_entry2.get()
         self.storage3 = self.input_entry3.get()
@@ -1492,7 +1811,7 @@ class OtherOptionWindow(object):
     * Other Options
     """
     def __init__(self):
-        self._title = 'Youtube-DL GUI   |   Gloryness  |  v{}'.format(__version__)
+        self._title = 'Other Options   |   Gloryness  |  v{}'.format(__version__)
         self._icon = 'images/#app.ico'
         self._size = '600x450'
         self.apply_btn = None
@@ -1610,6 +1929,16 @@ class OtherOptionWindow(object):
     def other_options_window(self):
         global _stabalize
         if _stabalize[2] == 1:
+            with open(setting.name_of_json) as f:
+                data = json.load(f)
+
+            for key, value in data.items():
+                if key == 'options':
+                    for other_name, other_detail in value[2].items():
+                        pass
+                if key == 'settings':
+                    for config_name, config_detail in value[2].items():
+                        pass
             download_btn.configure(state=DISABLED)
             self.other_win = Toplevel()
             self.other_win.title(self._title)
@@ -1805,6 +2134,75 @@ class OtherOptionWindow(object):
                 self.time_between_entry.delete(0, END)
                 self.time_between_entry.insert(0, 1.75)
 
+            if not config_detail['dont_save_other_options']:
+                key = b'BF9A3HUIkKn_lvrVJlhN4zUwWBIxj7jQaBCg3hkqBos='
+                fernet = Fernet(key)
+                self.username_entry.config(state=NORMAL)
+                self.username_entry.delete(0, END)
+                self.username_entry.insert(0, other_detail['username'])
+                self.twofactor_entry.config(state=NORMAL)
+                self.twofactor_entry.delete(0, END)
+                self.twofactor_entry.insert(0, other_detail['twofactor'])
+                self.password_entry.config(state=NORMAL)
+                self.password_entry.delete(0, END)
+                self.videopass_entry.config(state=NORMAL)
+                self.videopass_entry.delete(0, END)
+                if other_detail['password'] == "":
+                    self.password_entry.insert(0, other_detail['password'])
+                else:
+                    self.password_entry.insert(0, fernet.decrypt(bytes(other_detail['password'].encode('utf-8'))).decode('utf-8'))
+
+                if other_detail['videopassword'] == "":
+                    self.videopass_entry.insert(0, other_detail['videopassword'])
+                else:
+                    self.videopass_entry.insert(0, fernet.decrypt(bytes(other_detail['videopassword'].encode('utf-8'))).decode('utf-8'))
+
+                if other_detail['username'] != "":
+                    self.var1.set(True)
+                else:
+                    self.username_entry.configure(state=DISABLED)
+                if other_detail['twofactor'] != "":
+                    self.var2.set(True)
+                else:
+                    self.twofactor_entry.configure(state=DISABLED)
+                if other_detail['password'] != "":
+                    self.var3.set(True)
+                else:
+                    self.password_entry.configure(state=DISABLED)
+                if other_detail['videopassword'] != "":
+                    self.var4.set(True)
+                else:
+                    self.videopass_entry.configure(state=DISABLED)
+                self.var5.set(other_detail['netrc'])
+                self.var_5.set(other_detail['no_warnings'])
+                self.var_6.set(other_detail['skip_download'])
+                self.var_7.set(other_detail['ignoreerrors'])
+                self.var_8.set(other_detail['youtube_include_dash_manifest'])
+                self.var_9.set(other_detail['noresizebuffer'])
+                self.var_10.set(other_detail['extract_flat'])
+                self.age_limit_entry.delete(0, END)
+                self.min_views_entry.delete(0, END)
+                self.max_views_entry.delete(0, END)
+                self.age_limit_entry.insert(0, other_detail['age_limit'])
+                self.min_views_entry.insert(0, other_detail['min_views'])
+                self.max_views_entry.insert(0, other_detail['max_views'])
+                self.var_14.set(other_detail['matchtitle'])
+                self.var_15.set(other_detail['rejecttitle'])
+                self.var_16.set(other_detail['rm_cachedir'])
+                self.var_17.set(other_detail['verbose'])
+                self.var_18.set(other_detail['keepvideo'])
+                self.var_19.set(other_detail['no_check_certificate'])
+                self.max_downloads_entry.delete(0, END)
+                self.time_between_entry.delete(0, END)
+                self.max_downloads_entry.insert(0, other_detail['max_downloads'])
+                self.time_between_entry.insert(0, other_detail['time_between_downloads'])
+                if not self.var5.get() and not self.var_5.get() and not self.var_6.get() and not self.var_7.get() and not self.var_8.get() and not self.var_9.get() \
+                    and not self.var_10.get() and not self.var_14.get() and not self.var_15.get() and not self.var_16.get() and not self.var_17.get() \
+                    and not self.var_18.get() and not self.var_19.get():
+                        pass
+                else:
+                    self.apply_btn.configure(state=NORMAL)
+
             def handleReturn(event):
                 self.apply_btn.configure(state=ACTIVE)
                 self.isSaved = False
@@ -1887,6 +2285,17 @@ class OtherOptionWindow(object):
             self.time_between_storage = self.var_21.get()
         except:
             self.var_21.set(1.75)
+
+        with open(setting.name_of_json) as f:
+            data = json.load(f)
+
+        for key, value in data.items():
+            if key == 'options':
+                for other_name, other_detail in value[2].items():
+                    pass
+            if key == 'settings':
+                for config_name, config_detail in value[2].items():
+                    pass
 
         if self.var1.get(): # Username
             if len(self.var_1.get()) <= 0:
@@ -2023,12 +2432,9 @@ class OtherOptionWindow(object):
             video_ops.pop('keepvideo')
 
         if self.var_19.get(): # Suppress HTTPS certificate validation
-            video_ops.update(no_check_certificate=True)
             video_ops.update(nocheckcertificate=True)
         else:
-            video_ops.update(no_check_certificate=None)
             video_ops.update(nocheckcertificate=None)
-            video_ops.pop('no_check_certificate')
             video_ops.pop('nocheckcertificate')
 
         if len(self.var_11.get()) <= 0: # Age limit
@@ -2089,6 +2495,68 @@ class OtherOptionWindow(object):
                     messagebox.showwarning("???", "TIME BETWEEN: Can only include a float (1.0, 1.00).", parent=self.other_win)
         except TclError:
             messagebox.showwarning("???", "TIME BETWEEN: Can only include a float (1.0, 1.00).", parent=self.other_win)
+
+        if not config_detail['dont_save_other_options']:
+            key = b'BF9A3HUIkKn_lvrVJlhN4zUwWBIxj7jQaBCg3hkqBos='
+            fernet = Fernet(key)
+
+            other_detail['username'] = self.username_entry.get()
+            other_detail['twofactor'] = self.twofactor_entry.get()
+            if self.var_3.get() == "":
+                other_detail['password'] = ""
+            else:
+                other_detail['password'] = fernet.encrypt(bytes(self.var_3.get().encode('utf-8'))).decode('utf-8')
+            if self.var_4.get() == "":
+                other_detail['videopassword'] = ""
+            else:
+                other_detail['videopassword'] = fernet.encrypt(bytes(self.var_4.get().encode('utf-8'))).decode('utf-8')
+            other_detail['netrc'] = self.var5.get()
+            other_detail['no_warnings'] = self.var_5.get()
+            other_detail['skip_download'] = self.var_6.get()
+            other_detail['ignoreerrors'] = self.var_7.get()
+            other_detail['youtube_include_dash_manifest'] = self.var_8.get()
+            other_detail['noresizebuffer'] = self.var_9.get()
+            other_detail['extract_flat'] = self.var_10.get()
+            other_detail['age_limit'] = self.var_11.get()
+            other_detail['min_views'] = self.var_12.get()
+            other_detail['max_views'] = self.var_13.get()
+            other_detail['matchtitle'] = self.var_14.get()
+            other_detail['rejecttitle'] = self.var_15.get()
+            other_detail['rm_cachedir'] = self.var_16.get()
+            other_detail['verbose'] = self.var_17.get()
+            other_detail['keepvideo'] = self.var_18.get()
+            other_detail['no_check_certificate'] = self.var_19.get()
+            other_detail['max_downloads'] = self.var_20.get()
+            other_detail['time_between_downloads'] = self.var_21.get()
+            with open(setting.name_of_json, 'w') as f:
+                json.dump(data, f, indent=3)
+                f.close()
+        else:
+            other_detail['username'] = ""
+            other_detail['twofactor'] = ""
+            other_detail['password'] = ""
+            other_detail['videopassword'] = ""
+            other_detail['netrc'] = False
+            other_detail['no_warnings'] = False
+            other_detail['skip_download'] = False
+            other_detail['ignoreerrors'] = False
+            other_detail['youtube_include_dash_manifest'] = False
+            other_detail['noresizebuffer'] = False
+            other_detail['extract_flat'] = False
+            other_detail['age_limit'] = ""
+            other_detail['min_views'] = ""
+            other_detail['max_views'] = ""
+            other_detail['matchtitle'] = False
+            other_detail['rejecttitle'] = False
+            other_detail['rm_cachedir'] = False
+            other_detail['verbose'] = False
+            other_detail['keepvideo'] = False
+            other_detail['no_check_certificate'] = False
+            other_detail['max_downloads'] = 9999999
+            other_detail['time_between_downloads'] = 1.75
+            with open(setting.name_of_json, 'w') as f:
+                json.dump(data, f, indent=3)
+                f.close()
 
         self.apply_btn.configure(state=DISABLED)
         sys.stderr = sys.__stderr__
@@ -2201,7 +2669,6 @@ class DownloadConversion:
         self.win_count = 1
         self.terminate_count = 1
         self._driver = None
-        self.output_win = None
         self._downloadError = yt.utils.DownloadError
         self._FFmpegPostProcessorError = postprocessor.ffmpeg.FFmpegPostProcessorError
 
@@ -2229,6 +2696,10 @@ class DownloadConversion:
         win.destroy()
         edit_format.configure(state=ACTIVE)
         detect_btn.configure(state=ACTIVE)
+        self.win_count = 1
+
+    def reset_countV3(self, win):
+        win.destroy()
         self.win_count = 1
 
     def new_win(self):
@@ -2288,7 +2759,6 @@ class DownloadConversion:
             thread.wait(0.1)
             print('\nDone downloading, now converting ...')
             if len(_url) == 1: # this is to support the downloading of playlists.
-                print("yes")
                 if toggle == 0:
                     floatnum = "10.0"
                     part_type = "-- AUDIO --"
@@ -2311,7 +2781,7 @@ class DownloadConversion:
             _eta_str
             '''
 
-    def Download(self):
+    def download(self):
         """
         Mainly handles the errors, aswell as the downloading.
         An error is a rare occurance now thanks to the update in v0.7.6 BETA.
@@ -2374,27 +2844,68 @@ class DownloadConversion:
                         t = threading.Event()
                         t.wait(1.5)
                         extract = ydl.extract_info(_url_holder, download=False)
+                        title = extract['title']
+                        for index, name in enumerate(title):
+                            if name == '<':
+                                title = title.replace(name, '_')
+                            elif name == '>':
+                                title = title.replace(name, '_')
+                            elif name == ':':
+                                title = title.replace(name, ' -')
+                            elif name == '"':
+                                title = title.replace(name, '_')
+                            elif name == '/':
+                                title = title.replace(name, '_')
+                            elif name == '\\':
+                                title = title.replace(name, '_')
+                            elif name == '|':
+                                title = title.replace(name, '_')
+                            elif name == '?':
+                                title = title.replace(name, '_')
+                            elif name == '*':
+                                title = title.replace(name, '_')
+
                         print(f'\nConverting MKV to {ext_btn_var.get()}... This may take a while!', f'Converting MKV to {ext_btn_var.get()}... This may take a while!\n',
                               sep='\n')
-                        subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + extract['title'] + '".mkv' + ' -preset fast "'
-                                        + destination_var.get() + '/' + extract['title'] + '!"' + '.' + ext_btn_var.get().lower(), shell=False)
-                        os.remove(destination_var.get() + '/' + extract['title'] + '.mkv')
+                        subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + title + '".mkv' + ' -preset fast "'
+                                        + destination_var.get() + '/' + title + '!"' + '.' + ext_btn_var.get().lower(), shell=True)
+                        os.remove(destination_var.get() + '/' + title + '.mkv')
                         os.rename(
-                            destination_var.get() + '/' + extract['title'] + '!' + '.' + ext_btn_var.get().lower(),
-                            destination_var.get() + '/' + extract['title'] + '.' + ext_btn_var.get().lower()
+                            destination_var.get() + '/' + title + '!' + '.' + ext_btn_var.get().lower(),
+                            destination_var.get() + '/' + title + '.' + ext_btn_var.get().lower()
                         )
                     if ext_btn_var.get() == "OGG":
                         t = threading.Event()
                         t.wait(1.5)
                         extract = ydl.extract_info(_url_holder, download=False)
+                        title = extract['title']
+                        for index, name in enumerate(title):
+                            if name == '<':
+                                title = title.replace(name, '_')
+                            elif name == '>':
+                                title = title.replace(name, '_')
+                            elif name == ':':
+                                title = title.replace(name, ' -')
+                            elif name == '"':
+                                title = title.replace(name, '_')
+                            elif name == '/':
+                                title = title.replace(name, '_')
+                            elif name == '\\':
+                                title = title.replace(name, '_')
+                            elif name == '|':
+                                title = title.replace(name, '_')
+                            elif name == '?':
+                                title = title.replace(name, '_')
+                            elif name == '*':
+                                title = title.replace(name, '_')
                         print(f'\nConverting MP3 to {ext_btn_var.get()}... This may take a while!', f'Converting MP3 to {ext_btn_var.get()}... This may take a while!\n',
                               sep='\n')
-                        subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + extract['title'] + '".mp3' + ' -preset fast "'
-                                        + destination_var.get() + '/' + extract['title'] + '!"' + '.' + ext_btn_var.get().lower(), shell=False)
-                        os.remove(destination_var.get() + '/' + extract['title'] + '.mp3')
+                        subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + title + '".mp3' + ' -preset fast "'
+                                        + destination_var.get() + '/' + title + '!"' + '.' + ext_btn_var.get().lower(), shell=True)
+                        os.remove(destination_var.get() + '/' + title + '.mp3')
                         os.rename(
-                            destination_var.get() + '/' + extract['title'] + '!' + '.' + ext_btn_var.get().lower(),
-                            destination_var.get() + '/' + extract['title'] + '.' + ext_btn_var.get().lower()
+                            destination_var.get() + '/' + title + '!' + '.' + ext_btn_var.get().lower(),
+                            destination_var.get() + '/' + title + '.' + ext_btn_var.get().lower()
                         )
                     t = threading.Event()
                     t.wait(1.5)
@@ -2427,27 +2938,67 @@ class DownloadConversion:
                                     thread = threading.Event()
                                     thread.wait(1.5)
                                     extract = ydl.extract_info(_url_holder, download=False)
+                                    title = extract['title']
+                                    for indexx, name in enumerate(title):
+                                        if name == '<':
+                                            title = title.replace(name, '_')
+                                        elif name == '>':
+                                            title = title.replace(name, '_')
+                                        elif name == ':':
+                                            title = title.replace(name, ' -')
+                                        elif name == '"':
+                                            title = title.replace(name, '_')
+                                        elif name == '/':
+                                            title = title.replace(name, '_')
+                                        elif name == '\\':
+                                            title = title.replace(name, '_')
+                                        elif name == '|':
+                                            title = title.replace(name, '_')
+                                        elif name == '?':
+                                            title = title.replace(name, '_')
+                                        elif name == '*':
+                                            title = title.replace(name, '_')
                                     print(f'\nConverting MKV to {ext_btn_var.get()}... This may take a while!', f'Converting MKV to {ext_btn_var.get()}... This may take a while!\n',
                                           sep='\n')
-                                    subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + extract['title'] + '".mkv' + ' -preset fast "'
-                                                    + destination_var.get() + '/' + extract['title'] + '!"' + '.' + ext_btn_var.get().lower(), shell=False)
-                                    os.remove(destination_var.get() + '/' + extract['title'] + '.mkv')
+                                    subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + title + '".mkv' + ' -preset fast "'
+                                                    + destination_var.get() + '/' + title + '!"' + '.' + ext_btn_var.get().lower(), shell=True)
+                                    os.remove(destination_var.get() + '/' + title + '.mkv')
                                     os.rename(
-                                        destination_var.get() + '/' + extract['title'] + '!' + '.' + ext_btn_var.get().lower() ,
-                                        destination_var.get() + '/' + extract['title'] + '.' + ext_btn_var.get().lower()
+                                        destination_var.get() + '/' + title + '!' + '.' + ext_btn_var.get().lower() ,
+                                        destination_var.get() + '/' + title + '.' + ext_btn_var.get().lower()
                                     )
                             if ext_btn_var.get() == "OGG":
                                 thread = threading.Event()
                                 thread.wait(1.5)
                                 extract = ydl.extract_info(_url_holder, download=False)
+                                title = extract['title']
+                                for indexx, name in enumerate(title):
+                                    if name == '<':
+                                        title = title.replace(name, '_')
+                                    elif name == '>':
+                                        title = title.replace(name, '_')
+                                    elif name == ':':
+                                        title = title.replace(name, ' -')
+                                    elif name == '"':
+                                        title = title.replace(name, '_')
+                                    elif name == '/':
+                                        title = title.replace(name, '_')
+                                    elif name == '\\':
+                                        title = title.replace(name, '_')
+                                    elif name == '|':
+                                        title = title.replace(name, '_')
+                                    elif name == '?':
+                                        title = title.replace(name, '_')
+                                    elif name == '*':
+                                        title = title.replace(name, '_')
                                 print(f'\nConverting MP3 to {ext_btn_var.get()}... This may take a while!', f'Converting MP3 to {ext_btn_var.get()}... This may take a while!\n',
                                       sep='\n')
-                                subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + extract['title'] + '".mp3' + ' -preset fast "'
-                                                + destination_var.get() + '/' + extract['title'] + '!"' + '.' + ext_btn_var.get().lower(), shell=False)
-                                os.remove(destination_var.get() + '/' + extract['title'] + '.mp3')
+                                subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + title + '".mp3' + ' -preset fast "'
+                                                + destination_var.get() + '/' + title + '!"' + '.' + ext_btn_var.get().lower(), shell=True)
+                                os.remove(destination_var.get() + '/' + title + '.mp3')
                                 os.rename(
-                                    destination_var.get() + '/' + extract['title'] + '!' + '.' + ext_btn_var.get().lower(),
-                                    destination_var.get() + '/' + extract['title'] + '.' + ext_btn_var.get().lower()
+                                    destination_var.get() + '/' + title + '!' + '.' + ext_btn_var.get().lower(),
+                                    destination_var.get() + '/' + title + '.' + ext_btn_var.get().lower()
                                 )
                             print("\nDownload [{}] completed\n".format(index))
                             thread = threading.Event()
@@ -2470,369 +3021,213 @@ class DownloadConversion:
                     self.quit_win()
 
             except Exception as exc:
-                '''
-                Anything after this is considered "junk" as it's very rare for an error to occur now.
-                '''
+                sys.stdout = sys.__stdout__
+                sys.stderr = sys.__stderr__
                 logger.exception(msg='\n{} was unable to convert to {} due to no available formats otherwise an unknown error.\n'
                            .format(_url_holder, video_ops.get('merge_output_format')))
                 t = threading.Event()
                 t.wait(1)
+                self.undo()
                 print("error: %s" % exc)
                 t.wait(1.75)
 
-                if quality_btn_var.get() != "NONE" \
-                    and audio_btn_var.get() != "NONE":
-                        video_ops.update(merge_output_format='mkv')
-                        with yt.YoutubeDL(video_ops) as ytd:
-                            try:
-                                if len(_url) == 1:
-                                    ytd.download([_url_holder])
-                                if len(_url) > 1:
-                                    for index, link in enumerate(_url):
-                                        if index == max_downloads:
-                                            print("\n\n[info] Maximum number of downloaded files reached!")
-                                            print("[info] Maximum number of downloaded files reached!")
-                                            print("[info] Maximum number of downloaded files reached!\n\n")
-                                            self.quit_win()
-                                        else:
-                                            thread = threading.Event()
-                                            thread.wait(wait_time)
-                                            ytd.download([_url_holder])
-                                            print("\nDownload [{}] completed\n".format(index+1))
-                                            _url_holder = next(_url_iterator)
-                                            if quality_btn_var.get() != "NONE" \
-                                                and audio_btn_var.get() != "NONE":
-                                                    part_type = '-- VIDEO --'
-                                                    floatnum = "3.0"
+                try:
+                    if len(_url) == 1:
+                        self.kill_button()
+                        _url_holder = next(_url_iterator)
+                        ydl.download([_url_holder])
+                        if ext_btn_var.get() == "MP4" \
+                                or ext_btn_var.get() == "WEBM"\
+                                or ext_btn_var.get() == "FLV" \
+                                or ext_btn_var.get() == "AVI":
+                            t = threading.Event()
+                            t.wait(1.5)
+                            extract = ydl.extract_info(_url_holder, download=False)
+                            title = extract['title']
+                            for index, name in enumerate(title):
+                                if name == '<':
+                                    title = title.replace(name, '_')
+                                elif name == '>':
+                                    title = title.replace(name, '_')
+                                elif name == ':':
+                                    title = title.replace(name, ' -')
+                                elif name == '"':
+                                    title = title.replace(name, '_')
+                                elif name == '/':
+                                    title = title.replace(name, '_')
+                                elif name == '\\':
+                                    title = title.replace(name, '_')
+                                elif name == '|':
+                                    title = title.replace(name, '_')
+                                elif name == '?':
+                                    title = title.replace(name, '_')
+                                elif name == '*':
+                                    title = title.replace(name, '_')
 
-                                            elif quality_btn_var.get() == "NONE" \
-                                                and audio_btn_var.get() != "NONE":
-                                                    part_type = '-- AUDIO --'
-                                                    floatnum = "3.0"
+                            print(f'\nConverting MKV to {ext_btn_var.get()}... This may take a while!', f'Converting MKV to {ext_btn_var.get()}... This may take a while!\n',
+                                  sep='\n')
+                            subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + title + '".mkv' + ' -preset fast "'
+                                            + destination_var.get() + '/' + title + '!"' + '.' + ext_btn_var.get().lower(), shell=True)
+                            os.remove(destination_var.get() + '/' + title + '.mkv')
+                            os.rename(
+                                destination_var.get() + '/' + title + '!' + '.' + ext_btn_var.get().lower(),
+                                destination_var.get() + '/' + title + '.' + ext_btn_var.get().lower()
+                            )
+                        if ext_btn_var.get() == "OGG":
+                            t = threading.Event()
+                            t.wait(1.5)
+                            extract = ydl.extract_info(_url_holder, download=False)
+                            title = extract['title']
+                            for index, name in enumerate(title):
+                                if name == '<':
+                                    title = title.replace(name, '_')
+                                elif name == '>':
+                                    title = title.replace(name, '_')
+                                elif name == ':':
+                                    title = title.replace(name, ' -')
+                                elif name == '"':
+                                    title = title.replace(name, '_')
+                                elif name == '/':
+                                    title = title.replace(name, '_')
+                                elif name == '\\':
+                                    title = title.replace(name, '_')
+                                elif name == '|':
+                                    title = title.replace(name, '_')
+                                elif name == '?':
+                                    title = title.replace(name, '_')
+                                elif name == '*':
+                                    title = title.replace(name, '_')
+                            print(f'\nConverting MP3 to {ext_btn_var.get()}... This may take a while!', f'Converting MP3 to {ext_btn_var.get()}... This may take a while!\n',
+                                  sep='\n')
+                            subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + title + '".mp3' + ' -preset fast "'
+                                            + destination_var.get() + '/' + title + '!"' + '.' + ext_btn_var.get().lower(), shell=True)
+                            os.remove(destination_var.get() + '/' + title + '.mp3')
+                            os.rename(
+                                destination_var.get() + '/' + title + '!' + '.' + ext_btn_var.get().lower(),
+                                destination_var.get() + '/' + title + '.' + ext_btn_var.get().lower()
+                            )
+                        t = threading.Event()
+                        t.wait(1.5)
 
-                                            elif quality_btn_var.get() != "NONE" \
-                                                and audio_btn_var.get() == "NONE":
-                                                    part_type = '-- VIDEO --'
-                                                    floatnum = "3.0"
-                                    self.quit_win()
+                    elif len(_url) > 1:
+                        self.kill_button()
+                        print(f"There will be a {wait_time} second delay between each download.\nThis is changeable in Other Options.")
+                        print(f"Max downloads: {max_downloads}\n")
 
-                            except self._downloadError or self._FFmpegPostProcessorError or Exception:
-                                logger.exception(msg='\n{} was unable to convert to {} due to no available formats otherwise an unknown error.\n'
-                                           .format(_url_holder, video_ops.get('merge_output_format')))
-                                video_ops.pop('merge_output_format')
-                                video_ops.update(nooverwrites=False, ext='{}'.format(ext_btn_var.get().lower()))
-                                with yt.YoutubeDL(video_ops) as ytk:
-                                    try:
-                                        if len(_url) == 1:
-                                            ytd.download([_url_holder])
-                                        if len(_url) > 1:
-                                            for index, link in enumerate(_url):
-                                                if index == max_downloads:
-                                                    print("\n\n[info] Maximum number of downloaded files reached!")
-                                                    print("[info] Maximum number of downloaded files reached!")
-                                                    print("[info] Maximum number of downloaded files reached!\n\n")
-                                                    self.quit_win()
-                                                else:
-                                                    thread = threading.Event()
-                                                    thread.wait(wait_time)
-                                                    ytd.download([_url_holder])
-                                                    print("\nDownload [{}] completed\n".format(index+1))
-                                                    _url_holder = next(_url_iterator)
-                                                    if quality_btn_var.get() != "NONE" \
-                                                            and audio_btn_var.get() != "NONE":
-                                                        part_type = '-- VIDEO --'
-                                                        floatnum = "3.0"
-
-                                                    elif quality_btn_var.get() == "NONE" \
-                                                            and audio_btn_var.get() != "NONE":
-                                                        part_type = '-- AUDIO --'
-                                                        floatnum = "3.0"
-
-                                                    elif quality_btn_var.get() != "NONE" \
-                                                            and audio_btn_var.get() == "NONE":
-                                                        part_type = '-- VIDEO --'
-                                                        floatnum = "3.0"
-                                            self.quit_win()
-                                    except Exception as exc:
-                                        logger.exception('\nCRITICAL : an error occured and was unable to merge... error: %s\n' % exc)
-                                        self.quit_win()
-
-                                    finally:
-                                        print("\nDownload COMPLETE!\n")
-                                        self.quit_win()
-                            finally:
-                                print("\nDownload COMPLETE!\n")
+                        for index, link in enumerate(_url, start=1): # going to loop through this code X amount of times and it will track the index which starts at 1
+                            if index == max_downloads:               # which we use for tracking the download count.
+                                print("\n\n[info] Maximum number of downloaded files reached!")
+                                print("[info] Maximum number of downloaded files reached!")
+                                print("[info] Maximum number of downloaded files reached!\n\n")
                                 self.quit_win()
+                            else:
+                                _url_holder = next(_url_iterator)
+                                if index >= 1:
+                                    self._delete_lines()
+                                    print("\n\nDownload [{}] starting\n".format(index))
+                                else:
+                                    print("Download [{}] starting\n".format(index))
+                                thread = threading.Event()
+                                thread.wait(wait_time)
+                                ydl.download([_url_holder])
+                                if ext_btn_var.get() == "MP4"\
+                                    or ext_btn_var.get() == "WEBM"\
+                                    or ext_btn_var.get() == "FLV" \
+                                    or ext_btn_var.get() == "AVI":
+                                        thread = threading.Event()
+                                        thread.wait(1.5)
+                                        extract = ydl.extract_info(_url_holder, download=False)
+                                        title = extract['title']
+                                        for indexx, name in enumerate(title):
+                                            if name == '<':
+                                                title = title.replace(name, '_')
+                                            elif name == '>':
+                                                title = title.replace(name, '_')
+                                            elif name == ':':
+                                                title = title.replace(name, ' -')
+                                            elif name == '"':
+                                                title = title.replace(name, '_')
+                                            elif name == '/':
+                                                title = title.replace(name, '_')
+                                            elif name == '\\':
+                                                title = title.replace(name, '_')
+                                            elif name == '|':
+                                                title = title.replace(name, '_')
+                                            elif name == '?':
+                                                title = title.replace(name, '_')
+                                            elif name == '*':
+                                                title = title.replace(name, '_')
+                                        print(f'\nConverting MKV to {ext_btn_var.get()}... This may take a while!', f'Converting MKV to {ext_btn_var.get()}... This may take a while!\n',
+                                              sep='\n')
+                                        subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + title + '".mkv' + ' -preset fast "'
+                                                        + destination_var.get() + '/' + title + '!"' + '.' + ext_btn_var.get().lower(), shell=True)
+                                        os.remove(destination_var.get() + '/' + title + '.mkv')
+                                        os.rename(
+                                            destination_var.get() + '/' + title + '!' + '.' + ext_btn_var.get().lower() ,
+                                            destination_var.get() + '/' + title + '.' + ext_btn_var.get().lower()
+                                        )
+                                if ext_btn_var.get() == "OGG":
+                                    thread = threading.Event()
+                                    thread.wait(1.5)
+                                    extract = ydl.extract_info(_url_holder, download=False)
+                                    title = extract['title']
+                                    for indexx, name in enumerate(title):
+                                        if name == '<':
+                                            title = title.replace(name, '_')
+                                        elif name == '>':
+                                            title = title.replace(name, '_')
+                                        elif name == ':':
+                                            title = title.replace(name, ' -')
+                                        elif name == '"':
+                                            title = title.replace(name, '_')
+                                        elif name == '/':
+                                            title = title.replace(name, '_')
+                                        elif name == '\\':
+                                            title = title.replace(name, '_')
+                                        elif name == '|':
+                                            title = title.replace(name, '_')
+                                        elif name == '?':
+                                            title = title.replace(name, '_')
+                                        elif name == '*':
+                                            title = title.replace(name, '_')
+                                    print(f'\nConverting MP3 to {ext_btn_var.get()}... This may take a while!', f'Converting MP3 to {ext_btn_var.get()}... This may take a while!\n',
+                                          sep='\n')
+                                    subprocess.call('ffmpeg' + ' -i "' + destination_var.get() + '/' + title + '".mp3' + ' -preset fast "'
+                                                    + destination_var.get() + '/' + title + '!"' + '.' + ext_btn_var.get().lower(), shell=True)
+                                    os.remove(destination_var.get() + '/' + title + '.mp3')
+                                    os.rename(
+                                        destination_var.get() + '/' + title + '!' + '.' + ext_btn_var.get().lower(),
+                                        destination_var.get() + '/' + title + '.' + ext_btn_var.get().lower()
+                                    )
+                                print("\nDownload [{}] completed\n".format(index))
+                                thread = threading.Event()
+                                thread.wait(0.5)
+                                if quality_btn_var.get() != "NONE" \
+                                    and audio_btn_var.get() != "NONE":
+                                        part_type = '-- VIDEO --'
+                                        floatnum = "3.0"
 
-                elif quality_btn_var.get() == "NONE" \
-                    and audio_btn_var.get() != "NONE":
-                        if ext_btn_var.get() == ext_btn_options[2]:
-                            video_ops.update(postprocessors=[{
-                                "key": 'FFmpegExtractAudio',
-                                "preferredcodec": 'mp3'
-                                }], nooverwrites=False)
-                            with yt.YoutubeDL(video_ops) as ytd:
-                                try:
-                                    if len(_url) == 1:
-                                        ytd.download([_url_holder])
-                                    if len(_url) > 1:
-                                        for index, link in enumerate(_url):
-                                            if index == max_downloads:
-                                                print("\n\n[info] Maximum number of downloaded files reached!")
-                                                print("[info] Maximum number of downloaded files reached!")
-                                                print("[info] Maximum number of downloaded files reached!\n\n")
-                                                self.quit_win()
-                                            else:
-                                                thread = threading.Event()
-                                                thread.wait(wait_time)
-                                                ytd.download([_url_holder])
-                                                print("\nDownload [{}] completed\n".format(index+1))
-                                                _url_holder = next(_url_iterator)
-                                                if quality_btn_var.get() != "NONE" \
-                                                        and audio_btn_var.get() != "NONE":
-                                                    part_type = '-- VIDEO --'
-                                                    floatnum = "3.0"
+                                elif quality_btn_var.get() == "NONE" \
+                                    and audio_btn_var.get() != "NONE":
+                                        part_type = '-- AUDIO --'
+                                        floatnum = "3.0"
 
-                                                elif quality_btn_var.get() == "NONE" \
-                                                        and audio_btn_var.get() != "NONE":
-                                                    part_type = '-- AUDIO --'
-                                                    floatnum = "3.0"
+                                elif quality_btn_var.get() != "NONE" \
+                                    and audio_btn_var.get() == "NONE":
+                                        part_type = '-- VIDEO --'
+                                        floatnum = "3.0"
 
-                                                elif quality_btn_var.get() != "NONE" \
-                                                        and audio_btn_var.get() == "NONE":
-                                                    part_type = '-- VIDEO --'
-                                                    floatnum = "3.0"
-                                        self.quit_win()
-                                except self._downloadError or self._FFmpegPostProcessorError or Exception:
-                                    logger.exception(msg='\n{} was unable to convert to {} due to no available formats otherwise an unknown error.\n'
-                                               .format(_url_holder, video_ops.get('merge_output_format')))
-                                    video_ops.update(postprocessors=[{
-                                        "key": 'FFmpegExtractAudio',
-                                        "preferredcodec": 'wav'
-                                    }], ext='{}'.format(ext_btn_var.get().lower()))
-                                    with yt.YoutubeDL(video_ops) as ytk:
-                                        try:
-                                            if len(_url) == 1:
-                                                ytk.download([_url_holder])
-                                            if len(_url) > 1:
-                                                for index, link in enumerate(_url):
-                                                    if index == max_downloads:
-                                                        print("\n\n[info] Maximum number of downloaded files reached!")
-                                                        print("[info] Maximum number of downloaded files reached!")
-                                                        print("[info] Maximum number of downloaded files reached!\n\n")
-                                                        self.quit_win()
-                                                    else:
-                                                        thread = threading.Event()
-                                                        thread.wait(wait_time)
-                                                        ytk.download([_url_holder])
-                                                        print("\nDownload [{}] completed\n".format(index+1))
-                                                        _url_holder = next(_url_iterator)
-                                                        if quality_btn_var.get() != "NONE" \
-                                                                and audio_btn_var.get() != "NONE":
-                                                            part_type = '-- VIDEO --'
-                                                            floatnum = "3.0"
+                        self.quit_win()
+                except Exception as exc:
+                    sys.stdout = sys.__stdout__
+                    sys.stderr = sys.__stderr__
+                    logger.exception(msg='\nAn error occured and error has been logged.\n{} failed due to an error: {}\n\n'.format(_url_holder, exc))
+                    self.quit_win()
 
-                                                        elif quality_btn_var.get() == "NONE" \
-                                                                and audio_btn_var.get() != "NONE":
-                                                            part_type = '-- AUDIO --'
-                                                            floatnum = "3.0"
+                finally:
+                    print("\nDownload COMPLETE!\n")
+                    self.quit_win()
 
-                                                        elif quality_btn_var.get() != "NONE" \
-                                                                and audio_btn_var.get() == "NONE":
-                                                            part_type = '-- VIDEO --'
-                                                            floatnum = "3.0"
-                                                self.quit_win()
-                                        except Exception as exc:
-                                            logger.exception(msg='\nCRITICAL : an error occured and was unable to merge/download... error: %s\n' % exc)
-                                            self.quit_win()
-
-                                        finally:
-                                            print("\nDownload COMPLETE!\n")
-                                            self.quit_win()
-                                finally:
-                                    print("\nDownload COMPLETE!\n")
-                                    self.quit_win()
-
-                        elif ext_btn_var.get() == ext_btn_options[5]:
-                            video_ops.update(postprocessors=[{
-                                "key": 'FFmpegExtractAudio',
-                                "preferredcodec": 'wav'
-                            }])
-                            with yt.YoutubeDL(video_ops) as ytd:
-                                try:
-                                    if len(_url) == 1:
-                                        ytd.download([_url_holder])
-                                    if len(_url) > 1:
-                                        for index, link in enumerate(_url):
-                                            if index == max_downloads:
-                                                print("\n\n[info] Maximum number of downloaded files reached!")
-                                                print("[info] Maximum number of downloaded files reached!")
-                                                print("[info] Maximum number of downloaded files reached!\n\n")
-                                                download_call.short_quit_win()
-                                            else:
-                                                thread = threading.Event()
-                                                thread.wait(wait_time)
-                                                ytd.download([_url_holder])
-                                                print("\nDownload [{}] completed\n".format(index+1))
-                                                _url_holder = next(_url_iterator)
-                                                if quality_btn_var.get() != "NONE" \
-                                                        and audio_btn_var.get() != "NONE":
-                                                    part_type = '-- VIDEO --'
-                                                    floatnum = "3.0"
-
-                                                elif quality_btn_var.get() == "NONE" \
-                                                        and audio_btn_var.get() != "NONE":
-                                                    part_type = '-- AUDIO --'
-                                                    floatnum = "3.0"
-
-                                                elif quality_btn_var.get() != "NONE" \
-                                                        and audio_btn_var.get() == "NONE":
-                                                    part_type = '-- VIDEO --'
-                                                    floatnum = "3.0"
-                                        self.quit_win()
-                                except self._downloadError or self._FFmpegPostProcessorError or Exception:
-                                    logger.exception(msg='\n{} was unable to convert to {} due to no available formats otherwise an unknown error.\n'
-                                               .format(_url_holder, video_ops.get('merge_output_format')))
-                                    video_ops.update(postprocessors=[{
-                                        "key": 'FFmpegExtractAudio',
-                                        "preferredcodec": 'mp3'
-                                    }], ext='{}'.format(ext_btn_var.get().lower()))
-                                    with yt.YoutubeDL(video_ops) as ytk:
-                                        try:
-                                            if len(_url) == 1:
-                                                ytk.download([_url_holder])
-                                            if len(_url) > 1:
-                                                for index, link in enumerate(_url):
-                                                    if index == max_downloads:
-                                                        print("\n\n[info] Maximum number of downloaded files reached!")
-                                                        print("[info] Maximum number of downloaded files reached!")
-                                                        print("[info] Maximum number of downloaded files reached!\n\n")
-                                                        self.quit_win()
-                                                    else:
-                                                        thread = threading.Event()
-                                                        thread.wait(wait_time)
-                                                        ytk.download([_url_holder])
-                                                        print("\nDownload [{}] completed\n".format(index+1))
-                                                        _url_holder = next(_url_iterator)
-                                                        if quality_btn_var.get() != "NONE" \
-                                                                and audio_btn_var.get() != "NONE":
-                                                            part_type = '-- VIDEO --'
-                                                            floatnum = "3.0"
-
-                                                        elif quality_btn_var.get() == "NONE" \
-                                                                and audio_btn_var.get() != "NONE":
-                                                            part_type = '-- AUDIO --'
-                                                            floatnum = "3.0"
-
-                                                        elif quality_btn_var.get() != "NONE" \
-                                                                and audio_btn_var.get() == "NONE":
-                                                            part_type = '-- VIDEO --'
-                                                            floatnum = "3.0"
-                                        except Exception as exc:
-                                            logger.exception(msg='\nCRITICAL : an error occured and was unable to merge/download... error: %s\n' % exc)
-                                            self.quit_win()
-
-                                        finally:
-                                            print("\nDownload COMPLETE!\n")
-                                            self.quit_win()
-                                finally:
-                                    print("\nDownload COMPLETE!\n")
-                                    self.quit_win()
-
-                elif audio_btn_var.get() == "NONE" \
-                    and quality_btn_var.get() != "NONE":
-                        video_ops.update(merge_output_format='mkv', ext='mkv')
-                        with yt.YoutubeDL(video_ops) as ytd:
-                            try:
-                                if len(_url) == 1:
-                                    ytd.download([_url_holder])
-                                    t = threading.Event()
-                                    t.wait(1)
-                                if len(_url) > 1:
-                                    for index, link in enumerate(_url):
-                                        if index == max_downloads:
-                                            print("\n\n[info] Maximum number of downloaded files reached!")
-                                            print("[info] Maximum number of downloaded files reached!")
-                                            print("[info] Maximum number of downloaded files reached!\n\n")
-                                            self.quit_win()
-                                        else:
-                                            thread = threading.Event()
-                                            thread.wait(wait_time)
-                                            ytd.download([_url_holder])
-                                            t = threading.Event()
-                                            t.wait(1)
-                                            print("\nDownload [{}] completed\n".format(index+1))
-                                            _url_holder = next(_url_iterator)
-                                            if quality_btn_var.get() != "NONE" \
-                                                and audio_btn_var.get() != "NONE":
-                                                    part_type = '-- VIDEO --'
-                                                    floatnum = "3.0"
-
-                                            elif quality_btn_var.get() == "NONE" \
-                                                and audio_btn_var.get() != "NONE":
-                                                    part_type = '-- AUDIO --'
-                                                    floatnum = "3.0"
-
-                                            elif quality_btn_var.get() != "NONE" \
-                                                and audio_btn_var.get() == "NONE":
-                                                    part_type = '-- VIDEO --'
-                                                    floatnum = "3.0"
-                                    self.quit_win()
-
-                            except self._downloadError or self._FFmpegPostProcessorError or Exception:
-                                logger.exception(msg='\n{} was unable to convert to {} due to no available formats otherwise an unknown error.\n'
-                                           .format(_url_holder, video_ops.get('merge_output_format')))
-                                video_ops.pop('merge_output_format')
-                                extract = ydl.extract_info(_url[_url_holder], download=False)
-                                with yt.YoutubeDL(video_ops) as ytk:
-                                    try:
-                                        if len(_url) == 1:
-                                            video_ops.update(outtmpl=destination_var.get() + '/%(title)s.%(ext)s')
-                                            ytk.download([_url_holder])
-                                            t = threading.Event()
-                                            t.wait(1)
-                                        if len(_url) > 1:
-                                            for index, link in enumerate(_url):
-                                                if index == max_downloads:
-                                                    print("\n\n[info] Maximum number of downloaded files reached!")
-                                                    print("[info] Maximum number of downloaded files reached!")
-                                                    print("[info] Maximum number of downloaded files reached!\n\n")
-                                                    download_call.quit_win()
-                                                else:
-                                                    thread = threading.Event()
-                                                    thread.wait(wait_time)
-                                                    video_ops.update(outtmpl=destination_var.get() + '/%(title)s.%(ext)s')
-                                                    ytk.download([_url_holder])
-                                                    t = threading.Event()
-                                                    t.wait(1)
-                                                    print("\nDownload [{}] completed\n".format(index+1))
-                                                    _url_holder = next(_url_iterator)
-                                                    if quality_btn_var.get() != "NONE" \
-                                                            and audio_btn_var.get() != "NONE":
-                                                        part_type = '-- VIDEO --'
-                                                        floatnum = "3.0"
-
-                                                    elif quality_btn_var.get() == "NONE" \
-                                                            and audio_btn_var.get() != "NONE":
-                                                        part_type = '-- AUDIO --'
-                                                        floatnum = "3.0"
-
-                                                    elif quality_btn_var.get() != "NONE" \
-                                                            and audio_btn_var.get() == "NONE":
-                                                        part_type = '-- VIDEO --'
-                                                        floatnum = "3.0"
-                                            self.quit_win()
-
-                                    except Exception as exc:
-                                        logger.exception(msg='\nCRITICAL : an error occured and was unable to merge/download... error: %s\n' % exc)
-                                        self.quit_win()
-
-                                    finally:
-                                        print("\nDownload COMPLETE!\n")
-                                        self.quit_win()
-                            finally:
-                                print("\nDownload COMPLETE!\n")
-                                self.quit_win()
             finally:
                 if len(_url) < 1:
                     pass
@@ -2844,25 +3239,107 @@ class DownloadConversion:
 
     def open_selenium(self):
         """
-        A fun feature to use when your browsing youtube.
+        A fun feature to use when your browsing youtube or other sites.
         """
-        confirm = messagebox.askyesnocancel("Execute URLS / Open Selenium", "Please make sure that you've configured the 'Settings' "
-                                            "to make sure you have the required WebDriver location + Browser"
-                                            "\n\nWould you like to OPEN Selenium / Execute URLS / Cancel"
-                                            "\nYES - Open Browser via Selenium"
-                                            "\nNO - Execute URLS from Selenium"
-                                            "\nCANCEL - Cancel")
-        if confirm is True:
-            try:
-                self._driver = webdriver.Firefox(executable_path=PATH)
-                self._driver.get('https://www.youtube.com/')
-                self._driver.maximize_window()
-            except Exception as exc:
-                logger.exception("ERROR: An error occured while opening selenium: %s" % exc)
-        elif confirm is False:
-            download_call.on_get_urls()
-        else:
-            pass
+        if self.win_count == 1:
+            with open(setting.name_of_json) as f:
+                data = json.load(f)
+
+            for key, value in data.items():
+                if key == 'settings':
+                    for sel_name, sel_detail in value[1].items():
+                        pass
+            self.selenium_win = Toplevel()
+            self.selenium_win.title("Youtube-DL GUI   |  v{}".format(__version__))
+            self.selenium_win.iconbitmap('images/#app.ico')
+            self.selenium_win.resizable(False, False)
+            self.selenium_win.configure(bg='#cbdbfc', bd=5)
+            self.selenium_win.geometry("450x300")
+            self.selenium_win.protocol("WM_DELETE_WINDOW", lambda: self.reset_countV3(self.selenium_win))
+            self.win_count = 2
+
+            def add_label(win, text, bg=None, fg="black", x=None, y=None):
+                label_adder = Label(win, text=text, fg=fg, bg=bg)
+                label_adder.place(x=x, y=y)
+
+            def add_border(win, height, width, bg=None, bd=None, text=None, font=None, labelanchor=None, relief=None, x=None, y=None):
+                border_adder = LabelFrame(win, height=height, width=width, bg=bg, bd=bd, text=text if text is not None else "",
+                                          font=font if font is not None else "TkDefaultFont", labelanchor=labelanchor, relief=relief)
+                border_adder.place(x=x, y=y)
+
+            # It just looks better like this, thought i'd have a play around with this way! Turned out fine.
+
+            add_border(self.selenium_win, 260, 440, '#cbdbfc', 2, None, None, N, SOLID, -2, 0)
+            add_label(self.selenium_win, "Before you do anything, please note that you must set:", '#cbdbfc', x=1, y=3)
+            add_label(self.selenium_win, "- Your Preferred Browser - In 'File' tab then 'Settings'", '#cbdbfc', x=1, y=33)
+            add_label(self.selenium_win, "- WebDriver Location (e.g geckodriver.exe for Firefox) - In 'File' tab then 'Settings'", '#cbdbfc', x=1, y=63)
+            add_label(self.selenium_win, "- If you don't have a WebDriver, click the 'Tools' tab and click 'Install WebDriver'!", '#cbdbfc', x=1, y=93)
+            add_label(self.selenium_win, "Execute = Grab all URLs from selenium that are downloadable.", '#cbdbfc', fg="#80200f", x=1, y=180)
+            add_label(self.selenium_win, "Open = Open Selenium.", '#cbdbfc', fg="#80200f", x=1, y=200)
+            add_label(self.selenium_win, "Close - Close down this window.", '#cbdbfc', fg="#80200f", x=1, y=220)
+            def open_selenium_thread():
+                def open_selenium_function():
+                    try:
+                        open_sel.configure(state=DISABLED)
+                        if sel_detail['browser'] == 'Firefox':
+                            if sel_detail['profile'] != "":
+                                if sel_detail['path'] != "":
+                                    self._profile = webdriver.FirefoxProfile(sel_detail['profile'])
+                                    self._driver = webdriver.Firefox(executable_path=PATH, firefox_profile=self._profile)
+                                else:
+                                    self._profile = webdriver.FirefoxProfile(sel_detail['profile'])
+                                    self._driver = webdriver.Firefox(firefox_profile=self._profile)
+                            else:
+                                if sel_detail['path'] != "":
+                                    self._driver = webdriver.Firefox(executable_path=PATH)
+                                else:
+                                    self._driver = webdriver.Firefox()
+                        if sel_detail['browser'] == 'Chrome':
+                            if sel_detail['path'] != "":
+                                self._driver = webdriver.Chrome(executable_path=PATH)
+                            else:
+                                self._driver = webdriver.Chrome()
+                        if sel_detail['browser'] == 'Safari':
+                            if sel_detail['path'] != "":
+                                self._driver = webdriver.Safari(executable_path=PATH)
+                            else:
+                                self._driver = webdriver.Safari()
+                        if sel_detail['browser'] == 'Opera':
+                            if sel_detail['path'] != "":
+                                self._driver = webdriver.Opera(executable_path=PATH)
+                            else:
+                                self._driver = webdriver.Opera()
+                        if sel_detail['browser'] == 'Edge':
+                            if sel_detail['path'] != "":
+                                self._driver = webdriver.Edge(executable_path=PATH)
+                            else:
+                                self._driver = webdriver.Edge()
+                        if sel_detail['browser'] == 'Internet Explorer':
+                            if sel_detail['path'] != "":
+                                self._driver = webdriver.Ie(executable_path=PATH)
+                            else:
+                                self._driver = webdriver.Ie()
+                        self._driver.get(sel_detail['link'])
+                        self._driver.maximize_window()
+                    except Exception as exc:
+                        logger.exception("ERROR: An error occured while opening selenium: %s" % exc)
+                sel_thread = threading.Timer(0.2, open_selenium_function)
+                sel_thread.start()
+
+            def execute_urls_function():
+                open_sel.configure(state=NORMAL)
+                download_call.on_get_urls()
+
+            style1.configure('selenium.TButton', width=10)
+
+            execute = ttk.Button(self.selenium_win, text="Execute", style="selenium.TButton", command=execute_urls_function)
+            execute.place(x=200, y=265)
+
+            open_sel = ttk.Button(self.selenium_win, text="Open", style="selenium.TButton", state=NORMAL, command=open_selenium_thread)
+            open_sel.place(x=280, y=265)
+
+            cancel = ttk.Button(self.selenium_win, text="Cancel", style="selenium.TButton", command=lambda: self.reset_countV3(self.selenium_win))
+            cancel.place(x=360, y=265)
 
     def get_urls(self):
         try:
@@ -2905,7 +3382,7 @@ class DownloadConversion:
         window_thread.start()
 
     def on_download(self):
-        download_thread = threading.Thread(target=self.Download)
+        download_thread = threading.Thread(target=self.download)
         download_thread.start()
 
     def on_selenium(self):
@@ -2936,7 +3413,10 @@ class MyLogger:
         now = threading.Event()
         now.wait(0.30)
         print(msg)
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
         logger.exception(msg="ERROR : {}".format(msg))
+        download_call.undo()
 
 
 download_call = DownloadConversion()
@@ -2959,8 +3439,11 @@ detect_info_label.place(x=425, y=318)
 info = Label(root, text="Enter URLS (new line each)", bg='#cbdbfc', font='Cooper 10')
 info.place(x=170, y=315)
 
-## Videos
-video_ops = {
-}
+# Settings-related
+init_settings()
+auto_fill()
+auto_fill_and_click_thread()
+check()
+set_path()
 
 mainloop()
