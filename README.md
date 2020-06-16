@@ -36,7 +36,11 @@ Unlike most GUI's, this has settings and options.
 
 ## How To Use / Download Exe (if you want)
 
-It's simple, there is a download folder containing a .exe file which then contains all the folders and with a already converted exe file. After that, load it up and select your format and then click 'Done'. Enter the URL(s) on a new line each url, and then click 'Download'. You may also choose the option mid-download to 'Kill Operation'.
+- It's simple, there is a download folder containing a .exe file which then contains all the folders and with a already converted exe file. 
+
+- Now, here is the optional part. If you do not already have FFmpeg installed (or something simallar), then click the 'Tools' tab and click 'Install FFmpeg'. Here you can install FFmpeg via the GUI. Next you're going to have to put the FFmpeg folder somewhere, and set that as an environment variable on your PC.
+
+- You can also install a WebDriver located in 'Tools' for the option 'Detect URLs' as that uses selenium. NOTE: If you use Firefox, you can set your Firefox Profile in settings.
 
 <a href="download/" download="YTDL.exe"> Download Link<a/>
 
