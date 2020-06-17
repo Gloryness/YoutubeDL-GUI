@@ -22,6 +22,8 @@ This is a project I made with the youtube-dl module, where you can easily downlo
 
 Unlike most GUI's, this has settings and options.
 
+<a href="https://github.com/Gloryness/YoutubeDL-GUI/raw/master/download.zip" download="Youtube-DL GUI.exe"> Download Link<a/>
+
 ## Featuring:
 
 
@@ -41,7 +43,8 @@ Unlike most GUI's, this has settings and options.
 
 - Now, here is the optional part. If you do not already have FFmpeg installed (or something simallar), then click the 'Tools' tab and click 'Install FFmpeg'. Here you can install FFmpeg via the GUI. Next you're going to have to put the FFmpeg folder somewhere, and set that as an environment variable on your PC.
 
-- You can also install a WebDriver located in 'Tools' for the option 'Detect URLs' as that uses selenium. NOTE: If you use Firefox, you can set your Firefox Profile in settings.
+- You can also install a WebDriver located in 'Tools' for the option 'Detect URLs' as that uses selenium. 
+NOTE: If you use Firefox, you can set your Firefox Profile in settings.
 
 <a href="https://github.com/Gloryness/YoutubeDL-GUI/raw/master/download.zip" download="Youtube-DL GUI.exe"> Download Link<a/>
 
