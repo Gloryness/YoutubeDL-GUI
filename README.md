@@ -25,14 +25,15 @@ Unlike most GUI's, this has settings and options.
 ## Featuring:
 
 
-* File Options (filename + more)
-* Download Options (involving the download)
-* Other Options (auth, restrictions, more)
-* Settings (selenium settings for 'Detect URLs', general settings and config settings for .json)
-* You can Install FFmpeg via the GUI.
-* You can Install any WebDriver via the GUI.
-* Every input is built with .JSON input so whatever you do, stays right there. (if you want it to!)
-* Jump to the Destination Folder easily
+* The ability to download videos.
+* The ability to install FFmpeg via the GUI.
+* The ability to install any browser WebDriver via the GUI.
+* The ability to update the whole GUI if it's outdated.
+* The ability to config your own settings. [Selenium Settings, General Settings, Configuration Settings]
+* The ability to change File Options with your video (title, description, subtitles, etc)
+* The ability to change Download Options with your video (playlist, avonv/ffmpeg, ads, filesize, etc)
+* The ability to change Other Options with your video (authentication, restrictions and more)
+* The ability to browse videos in your own browser and instantly catch all URLs and insert into URL-BOX.
 
 ## How To Use / Download Exe (if you want)
 
