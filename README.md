@@ -36,7 +36,7 @@ Unlike most GUI's, this has settings and options.
 
 ## How To Use / Download Exe (if you want)
 
-- It's simple, there is a file named 'download.zip' and all you need to do is download it by clicking on it and using the Download option.
+- It's simple, there is a file named 'download.zip' and all you need to do is download it by clicking on it and using the Download option or just click the Download Link below.
 
 - Now, here is the optional part. If you do not already have FFmpeg installed (or something simallar), then click the 'Tools' tab and click 'Install FFmpeg'. Here you can install FFmpeg via the GUI. Next you're going to have to put the FFmpeg folder somewhere, and set that as an environment variable on your PC.
 
