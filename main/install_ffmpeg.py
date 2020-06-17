@@ -64,7 +64,7 @@ class InstallFFmpeg(object):
         self.size = ''
 
     def on_ffmpeg_window(self):
-        thread = threading.Thread(target=self.ffmpeg_window)
+        thread = threading.Timer(0.001, self.ffmpeg_window)
         thread.start()
 
     def determine_both(self, event):
@@ -289,6 +289,7 @@ class InstallFFmpeg(object):
             extract = ttk.Checkbutton(self.root, text="Extract files from .zip after download", style='TCheckbutton', variable=self.extract_var,
                                       onvalue=True, offvalue=False)
             extract.place(x=105, y=150)
+            self.extract_var.set(True)
 
             exit_btn = ttk.Button(self.root, text="Exit", style="some.TButton", command=lambda: reset(self.root))
             exit_btn.place(x=361, y=175)

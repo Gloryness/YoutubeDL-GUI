@@ -5,6 +5,7 @@ from install_ffmpeg import InstallFFmpeg
 from install_webdriver import InstallWebDriver
 from update import SendRequest
 from settings_window import SettingsWindow
+from help_window import Help
 
 from _tkinter import TclError
 from tkinter import *
@@ -140,6 +141,17 @@ def updategui():
     req = SendRequest(__version__)
     req.on_send_request()
 
+def request_help(topic):
+    help_ = Help(__version__)
+    if topic == "ffmpeg":
+        help_.ffmpeg_thread()
+    elif topic == "urls":
+        help_.detect_urls_thread()
+    elif topic == "video":
+        help_.downloading_videos_thread()
+    elif topic == "other":
+        help_.other_issues_thread()
+
 tools_menu.add_command(label="Go To Destination Folder", command=go_to)
 tools_menu.add_separator()
 tools_menu.add_command(label="Install FFmpeg", command=installffmpeg)
@@ -155,6 +167,14 @@ credits_menu.add_separator()
 credits_menu.add_command(label="Join my discord server!", command=discord_join)
 credits_menu.add_command(label="Donate to support me!", command=donate)
 credits_menu.add_command(label="View code on GitHub", command=view_github)
+
+help_menu = Menu(my_menu, tearoff=0)
+my_menu.add_cascade(label="Help", menu=help_menu)
+help_menu.add_command(label="Installing/Setting up FFmpeg", command=lambda: request_help("ffmpeg"))
+help_menu.add_command(label="How do you use 'Detect URLS'?", command=lambda: request_help("urls"))
+help_menu.add_command(label="Downloading Videos", command=lambda: request_help("video"))
+help_menu.add_command(label="Other Issues", command=lambda: request_help("other"))
+help_menu.add_separator()
 
 label1 = Label(root, text="Destination -", bg="#cbdbfc")
 label1.grid(row=0, column=0)

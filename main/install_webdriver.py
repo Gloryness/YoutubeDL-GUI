@@ -58,7 +58,7 @@ class InstallWebDriver(object):
         self.size = ''
 
     def on_webdriver_window(self):
-        thread = threading.Thread(target=self.webdriver_window)
+        thread = threading.Timer(0.001, self.webdriver_window)
         thread.start()
 
     def browse_cmd(self):
@@ -271,6 +271,7 @@ class InstallWebDriver(object):
             extract = ttk.Checkbutton(self.webdriver_win, text="Extract file from .zip after download", style='TCheckbutton', variable=self.extract_var,
                                       onvalue=True, offvalue=False)
             extract.place(x=110, y=150)
+            self.extract_var.set(True)
 
             self.destination_var = StringVar()
 

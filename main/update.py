@@ -1,16 +1,23 @@
 import requests
 import threading
+import subprocess
 from zipfile import *
 import os
 
 from tkinter import *
-from tkinter import scrolledtext
+from tkinter import scrolledtext, ttk
 
 count = 1
 def reset(win):
     global count
     count = 1
     win.destroy()
+
+def restart(win):
+    global count
+    count = 1
+    win.quit()
+    subprocess.call("update_manager.exe")
 
 class SendRequest:
     def __init__(self, version):
@@ -59,16 +66,22 @@ class SendRequest:
             self.text_box.insert(END, "GUI seems to be out of date.\n")
             thread_event = threading.Event()
             thread_event.wait(1.20)
+            try:
+                with open('Youtube-DL GUI.exe') as t:
+                    t.close()
+            except FileNotFoundError:
+                self.text_box.insert(END, "Sorry but before we can update, your current .exe file must be named 'Youtube-DL GUI.exe', thanks!\n")
+                self.text_box.config(state=DISABLED)
+                quit(self.get_request)
             self.text_box.insert(END, "Downloading contents of newest version...\n")
             self.text_box.config(state=DISABLED)
             try:
-                self.download = requests.get('https://github.com/Gloryness/YoutubeDL-GUI/raw/master/download.zip', timeout=10)
+                self.download = requests.get('https://github.com/Gloryness/YoutubeDL-GUI/raw/master/exe.zip', timeout=10)
                 self.text_box.config(state=NORMAL)
                 self.text_box.insert(END, "Finished downloading contents...\n")
                 self.text_box.config(state=DISABLED)
                 thread_event = threading.Event()
                 thread_event.wait(1.20)
-                self.file_handling()
             except:
                 self.text_box.config(state=NORMAL)
                 self.text_box.insert(END, "\nAn error occured while trying to update.\n")
@@ -77,15 +90,13 @@ class SendRequest:
             self.file_handling()
 
     def file_handling(self):
-        current_directory_split = os.getcwd().replace('\\', '/\\').split('\\')
-        directory = ''.join(current_directory_split[0:-1])
         self.text_box.config(state=NORMAL)
         self.text_box.insert(END, "\nWriting all content to .zip file...\n")
         self.text_box.config(state=DISABLED)
         thread_event = threading.Event()
         thread_event.wait(1.40)
         try:
-            with open(f'{directory}download.zip', 'wb') as install:
+            with open(f'exe.zip', 'wb') as install:
                 install.write(self.download.content)
         except:
             self.text_box.config(state=NORMAL)
@@ -98,9 +109,9 @@ class SendRequest:
         self.text_box.config(state=DISABLED)
         thread_event = threading.Event()
         thread_event.wait(1.60)
-        with ZipFile(f'{directory}download.zip') as zipfile:
+        with ZipFile(f'exe.zip') as zipfile:
             try:
-                zipfile.extractall(directory)
+                zipfile.extractall(os.getcwd())
             except AttributeError:
                 self.text_box.config(state=NORMAL)
                 self.text_box.insert(END, "Finished extracting all content from .zip file...\n")
@@ -115,7 +126,15 @@ class SendRequest:
         self.text_box.config(state=NORMAL)
         self.text_box.insert(END, "\nDeleting content from .zip file...\n")
         self.text_box.config(state=DISABLED)
-        os.remove(f'{directory}download.zip')
+        os.remove(f'exe.zip')
+        thread_event = threading.Event()
+        thread_event.wait(1.20)
         self.text_box.config(state=NORMAL)
         self.text_box.insert(END, "Finished deleting content from .zip file...\n")
+        thread_event = threading.Event()
+        thread_event.wait(0.60)
+        self.text_box.insert(END, "\nRestart is required to apply update changes.\n")
         self.text_box.config(state=DISABLED)
+
+        restart_btn = ttk.Button(self.update_win, text="RESTART", style="some.TButton", command=lambda: restart(self.update_win))
+        restart_btn.place(x=180, y=250)
