@@ -26,7 +26,7 @@ class SendRequest:
         global count
         if count == 1:
             self.update_win = Toplevel()
-            self.update_win.title('Installing WebDriver  |  YoutubeDL GUI  |   v{}'.format(self.version))
+            self.update_win.title('Updating GUI...  |  YoutubeDL GUI  |   v{}'.format(self.version))
             self.update_win.iconbitmap('images/#app.ico')
             self.update_win.resizable(False, False)
             self.update_win.configure(bg='#cbdbfc', bd=5)
