@@ -20,6 +20,10 @@ def delete_old_exe():
 
 def rename_new_exe():
     os.rename('Youtube-DL GUI_update.exe', 'Youtube-DL GUI.exe')
+    thread = threading.Timer(1.5, start_up_new_exe)
+
+def start_up_new_exe():
+    subprocess.call('"Youtube-DL GUI".exe')
 
 thread = threading.Timer(1.0, delete_old_exe)
 thread.start()
