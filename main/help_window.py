@@ -88,7 +88,7 @@ class Help:
         self.add_label(self.help_win, "- Next, find that .exe file that you installed and place it anywhere on your machine.", '#cbdbfc', x=5, y=170, font=f)
         self.add_label(self.help_win, "- Then go to 'Settings' in the 'File' tab and in Selenium Settings set the PATH to the .exe!", '#cbdbfc', x=5, y=200, font=f)
         self.add_label(self.help_win, "- If your using the Firefox browser you can choose to link your Firefox profile (optional).", '#cbdbfc', x=5, y=230, font=f)
-        self.add_label(self.help_win, "- Other than that, you're ready to go!", '#cbdbfc', x=5, y=260, font=f)
+        self.add_label(self.help_win, "- When you open selenium, a command-line for the .exe will come up. Do not close it!", '#cbdbfc', x=5, y=260, font=f)
 
     def downloading_videos_help(self):
         self.add_label(self.help_win, "Downloading Videos - Help", '#cbdbfc', x=140, y=3, font=self.f)

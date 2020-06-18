@@ -96,7 +96,7 @@ class SendRequest:
         thread_event = threading.Event()
         thread_event.wait(1.40)
         try:
-            with open(f'exe.zip', 'wb') as install:
+            with open('exe.zip', 'wb') as install:
                 install.write(self.download.content)
         except:
             self.text_box.config(state=NORMAL)
@@ -109,7 +109,7 @@ class SendRequest:
         self.text_box.config(state=DISABLED)
         thread_event = threading.Event()
         thread_event.wait(1.60)
-        with ZipFile(f'exe.zip') as zipfile:
+        with ZipFile('exe.zip') as zipfile:
             try:
                 zipfile.extractall(os.getcwd())
             except AttributeError:
