@@ -15,7 +15,7 @@ class Help:
 
         global count
         if count == 1:
-            self.help_win = Tk()
+            self.help_win = Toplevel()
             self.help_win.title('Help  |  YoutubeDL GUI  |   v{}'.format(self.version))
             self.help_win.iconbitmap('images/#app.ico')
             self.help_win.resizable(False, False)
@@ -119,7 +119,3 @@ class Help:
 
         self.add_label(self.help_win, ">> Github Link <<", '#cbdbfc', "blue", x=170, y=200, font=f,
                        bind=(True, "<Button-1>", lambda event: webbrowser.open('https://github.com/Gloryness/YoutubeDL-GUI/issues')), bind1=(True, "<Enter>"), bind2=(True, "<Leave>"))
-
-t = Help('1.0.0')
-t.other_issues()
-mainloop()
