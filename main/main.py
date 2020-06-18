@@ -623,7 +623,7 @@ def done_btn_func():
     done_btn_thread.start()
 
 def auto_fill_and_click_thread():
-    my_thread = threading.Timer(1.75, auto_fill_and_click)
+    my_thread = threading.Timer(1.25, auto_fill_and_click)
     my_thread.start()
 
 def auto_fill_and_click():
