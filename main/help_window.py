@@ -46,6 +46,10 @@ class Help:
         thread = threading.Thread(target=self.other_issues)
         thread.start()
 
+    def about_gui_thread(self):
+        thread = threading.Thread(target=self.about_gui)
+        thread.start()
+
     def add_label(self, win, text, bg="#ffffff", fg="black", x=1, y=1, font=None, bind=(False, None, None), bind1=(False, None), bind2=(False, None)):
         label_adder = Label(win, text=text, fg=fg, bg=bg, font=font if font is not None else "TkDefaultFont")
         label_adder.place(x=x, y=y)
@@ -107,10 +111,6 @@ class Help:
         self.add_label(self.help_win, "GitHub.", '#cbdbfc', "blue", x=356, y=260,
                        bind=(True, "<Button-1>", lambda event: webbrowser.open('https://github.com/Gloryness/YoutubeDL-GUI/issues')), bind1=(True, "<Enter>"), bind2=(True, "<Leave>"))
 
-
-
-
-
     def other_issues(self):
         f = Font(family="TkDefaultFont", size=10, weight=BOLD)
         self.add_label(self.help_win, "Other Issues - Help", '#cbdbfc', x=180, y=3, font=self.f)
@@ -119,3 +119,11 @@ class Help:
 
         self.add_label(self.help_win, ">> Github Link <<", '#cbdbfc', "blue", x=170, y=200, font=f,
                        bind=(True, "<Button-1>", lambda event: webbrowser.open('https://github.com/Gloryness/YoutubeDL-GUI/issues')), bind1=(True, "<Enter>"), bind2=(True, "<Leave>"))
+
+    def about_gui(self):
+        self.add_label(self.help_win, "About this GUI", "#cbdbfc", x=185, y=5, font=self.f)
+        self.add_label(self.help_win, "This GUI was made to make Downloading Videos easier, but in a bit of a stylish way too :)", "#cbdbfc", x=5, y=40)
+        self.add_label(self.help_win, "It took 2 months to make, on & off and it was all made by one person! (see credits)", "#cbdbfc", x=5, y=60)
+        self.add_label(self.help_win, "If you would like to look at the source code, it's all on Github.", "#cbdbfc", x=5, y=100)
+        self.add_label(self.help_win, "If you would like to request a feature, make an Issue on Github.", "#cbdbfc", x=5, y=120)
+        self.add_label(self.help_win, "If you encounter any bugs, be sure to report them on Github.", "#cbdbfc", x=5, y=140)

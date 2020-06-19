@@ -2,15 +2,13 @@ import os
 import threading
 import subprocess
 
-try:
-    subprocess.call('TASKKILL /IM "Youtube-DL GUI.exe" /F')
-except:
-    quit()
+
+subprocess.call('TASKKILL /IM "Youtube-DL GUI.exe" /F')
 
 try:
     with open('Youtube-DL GUI_update.exe') as f:
         f.close()
-except:
+except FileNotFoundError:
     quit()
 
 def delete_old_exe():

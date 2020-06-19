@@ -30,7 +30,7 @@ import threading
 import logging
 import webbrowser
 
-__version__ = '1.0.6'
+__version__ = '1.0.7'
 
 ## Main Dictionary
 video_ops = {
@@ -151,6 +151,8 @@ def request_help(topic):
         help_.downloading_videos_thread()
     elif topic == "other":
         help_.other_issues_thread()
+    elif topic == "gui":
+        help_.about_gui_thread()
 
 tools_menu.add_command(label="Go To Destination Folder", command=go_to)
 tools_menu.add_separator()
@@ -164,8 +166,8 @@ my_menu.add_cascade(label="Credits", menu=credits_menu)
 
 credits_menu.add_command(label="Made by Gloryness#4341 (discord)")
 credits_menu.add_separator()
-credits_menu.add_command(label="Join my discord server!", command=discord_join)
-credits_menu.add_command(label="Donate to support me!", command=donate)
+credits_menu.add_command(label="Join my discord server", command=discord_join)
+credits_menu.add_command(label="Donate to support me", command=donate)
 credits_menu.add_command(label="View code on GitHub", command=view_github)
 
 help_menu = Menu(my_menu, tearoff=0)
@@ -175,6 +177,7 @@ help_menu.add_command(label="How do you use 'Detect URLS'?", command=lambda: req
 help_menu.add_command(label="Downloading Videos", command=lambda: request_help("video"))
 help_menu.add_command(label="Other Issues", command=lambda: request_help("other"))
 help_menu.add_separator()
+help_menu.add_command(label="About this GUI", command=lambda: request_help("gui"))
 
 label1 = Label(root, text="Destination -", bg="#cbdbfc")
 label1.grid(row=0, column=0)
