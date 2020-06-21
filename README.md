@@ -1,6 +1,6 @@
 <p align="center">
   <a href="download/" download="YTDL.exe"><img src="main/images/%23app.ico" /></a>
-  <h3 align="center">Youtube-DL GUI v1.0.6</h3>
+  <h3 align="center">Youtube-DL GUI v1.0.8</h3>
   <p align="center">
     Download videos freely with this simple GUI.
     <br />
