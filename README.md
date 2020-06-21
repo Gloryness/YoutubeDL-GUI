@@ -1,6 +1,6 @@
 <p align="center">
   <a href="download/" download="YTDL.exe"><img src="main/images/%23app.ico" /></a>
-  <h3 align="center">Youtube-DL GUI v1.0.8</h3>
+  <h3 align="center">Youtube-DL GUI v1.0.81</h3>
   <p align="center">
     Download videos freely with this simple GUI.
     <br />
@@ -16,7 +16,7 @@
 ## About the Project
 
 
-A Youtube-DL GUI by Gloryness. This is a project I made and I'm very proud of it. 
+A Youtube-DL GUI by Gloryness. This is a project I made and I'm very proud of it.
 
 This is a project I made with the youtube-dl module, where you can easily download videos and set the destination folder for it.
 
@@ -43,7 +43,7 @@ Unlike most GUI's, this has settings and options.
 
 - Now, here is the optional part. If you do not already have FFmpeg installed (or something simallar), then click the 'Tools' tab and click 'Install FFmpeg'. Here you can install FFmpeg via the GUI. Next you're going to have to put the FFmpeg folder somewhere, and set that as an environment variable on your PC.
 
-- You can also install a WebDriver located in 'Tools' for the option 'Detect URLs' as that uses selenium. 
+- You can also install a WebDriver located in 'Tools' for the option 'Detect URLs' as that uses selenium.
 NOTE: If you use Firefox, you can set your Firefox Profile in settings.
 
 <a href="https://github.com/Gloryness/YoutubeDL-GUI/raw/master/download.zip" download="Youtube-DL GUI.exe"> Download Link<a/>
