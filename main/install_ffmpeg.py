@@ -323,6 +323,12 @@ class InstallFFmpeg(object):
                 with ZipFile(f'{self.destination_var.get()}{"/" if not self.destination_var.get().endswith("/") else ""}{self.name}') as zipfile:
                     self.textbox.insert(END, "\nExtracting files from .zip file...\n")
                     zipfile.extractall(f'{self.destination_var.get()}')
+                    t = threading.Event()
+                    t.wait(2.8)
+                    self.install_btn.config(state=NORMAL)
+                    self.textbox.insert(END, "Extraction was a complete success.\n\nFFmpeg has successfully been downloaded.")
+                    self.textbox.config(state=DISABLED)
+                    zipfile.close()
             except AttributeError:
                 t = threading.Event()
                 t.wait(2.8)

@@ -30,7 +30,7 @@ import threading
 import logging
 import webbrowser
 
-__version__ = '1.0.8'
+__version__ = '1.0.81'
 
 ## Main Dictionary
 video_ops = {
