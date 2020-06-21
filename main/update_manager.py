@@ -2,7 +2,6 @@ import os
 import threading
 import subprocess
 
-
 subprocess.call('TASKKILL /IM "Youtube-DL GUI.exe" /F')
 
 try:

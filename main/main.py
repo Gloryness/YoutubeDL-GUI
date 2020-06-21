@@ -30,7 +30,7 @@ import threading
 import logging
 import webbrowser
 
-__version__ = '1.0.7'
+__version__ = '1.0.8'
 
 ## Main Dictionary
 video_ops = {
@@ -1259,7 +1259,7 @@ class DownloadOptionWindow(object):
         self.var_1, self.var_2, self.var_3, self.var_4, self.var_5, self.var_6, self.var_7, self.var_8, \
             self.var_9, self.var_10, self.var_11, self.var_12, self.var_13, self.var_14, self.var_15 = \
             BooleanVar(), BooleanVar(), BooleanVar(), BooleanVar(), BooleanVar(), BooleanVar(), BooleanVar(), BooleanVar(), \
-            StringVar(), StringVar(), StringVar(), StringVar(), StringVar(), StringVar(), StringVar()
+            StringVar(), StringVar(), IntVar(), IntVar(), StringVar(), StringVar(), StringVar()
 
     def on_download_options(self):
         download_options_thread = threading.Thread(target=self.download_options_window)
@@ -1555,6 +1555,8 @@ class DownloadOptionWindow(object):
             pass
 
     def download_apply(self):
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
         self.isSaved = True
         self.input_entry1_saved = True
         self.input_entry2_saved = True
@@ -1699,29 +1701,13 @@ class DownloadOptionWindow(object):
                 video_ops.pop('max_filesize')
                 self.input_entry2.delete(0, END)
 
-        if len(self.var_11.get()) <= 0:
+        if len(str(self.var_11.get())) <= 0:
             video_ops.update(playliststart=None)
             video_ops.pop('playliststart')
             self.input_entry3.delete(0, END)
         else:
-            if self.var_11.get().startswith(('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')):
-                if self.var_11.get().endswith(('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')):
-                    if self.var_11.get().isnumeric():
-                        video_ops.update(playliststart=self.var_11.get())
-                    else:
-                        if self.count == 1:
-                            messagebox.showerror("???", "Error on Start Playlist section.\nYou can only use integers.", parent=self.download_win)
-                            self.count += 1
-                        video_ops.update(playliststart=None)
-                        video_ops.pop('playliststart')
-                        self.input_entry3.delete(0, END)
-                else:
-                    if self.count == 1:
-                        messagebox.showerror("???", "Error on Start Playlist section.\nYou can only use integers.", parent=self.download_win)
-                        self.count += 1
-                    video_ops.update(playliststart=None)
-                    video_ops.pop('playliststart')
-                    self.input_entry3.delete(0, END)
+            if str(self.var_11.get()).isnumeric():
+                video_ops.update(playliststart=self.var_11.get())
             else:
                 if self.count == 1:
                     messagebox.showerror("???", "Error on Start Playlist section.\nYou can only use integers.", parent=self.download_win)
@@ -1730,29 +1716,13 @@ class DownloadOptionWindow(object):
                 video_ops.pop('playliststart')
                 self.input_entry3.delete(0, END)
 
-        if len(self.var_12.get()) <= 0:
+        if len(str(self.var_12.get())) <= 0:
             video_ops.update(playlistend=None)
             video_ops.pop('playlistend')
             self.input_entry4.delete(0, END)
         else:
-            if self.var_12.get().startswith(('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')):
-                if self.var_12.get().endswith(('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')):
-                    if self.var_12.get().isnumeric():
-                        video_ops.update(playlistend=self.var_12.get())
-                    else:
-                        if self.count == 1:
-                            messagebox.showerror("???", "Error on End Playlist section.\nYou can only use integers.", parent=self.download_win)
-                            self.count += 1
-                        video_ops.update(playlistend=None)
-                        video_ops.pop('playlistend')
-                        self.input_entry4.delete(0, END)
-                else:
-                    if self.count == 1:
-                        messagebox.showerror("???", "Error on End Playlist section.\nYou can only use integers.", parent=self.download_win)
-                        self.count += 1
-                    video_ops.update(playlistend=None)
-                    video_ops.pop('playlistend')
-                    self.input_entry4.delete(0, END)
+            if str(self.var_12.get()).isnumeric():
+                video_ops.update(playlistend=self.var_12.get())
             else:
                 if self.count == 1:
                     messagebox.showerror("???", "Error on End Playlist section.\nYou can only use integers.", parent=self.download_win)
@@ -2633,10 +2603,13 @@ class StdDirector(object):
         self.output = output
 
     def write(self, string):
-        self.output.config(state=NORMAL)
-        self.output.insert("end", string)
-        self.output.see("end")
-        self.output.config(state=DISABLED)
+        try:
+            self.output.config(state=NORMAL)
+            self.output.insert("end", string)
+            self.output.see("end")
+            self.output.config(state=DISABLED)
+        except TclError:
+            pass
 
 floatnum = "3.0"
 part_type = "-- VIDEO --"
@@ -2791,8 +2764,18 @@ class DownloadConversion:
                     part_type = "-- VIDEO --"
                     toggle = 0
             else:
-                floatnum = "10.0"
-                part_type = "-- AUDIO --"
+                if len(_url_holder) >= 65:
+                    if toggle == 0:
+                        floatnum = "10.0"
+                        part_type = "-- AUDIO --"
+                        toggle = 1
+                    elif toggle == 1:
+                        floatnum = "3.0"
+                        part_type = "-- VIDEO --"
+                        toggle = 0
+                else:
+                    floatnum = "10.0"
+                    part_type = "-- AUDIO --"
             thread = threading.Event()
             thread.wait(1.5)
         if d['status'] == 'downloading':
@@ -2810,7 +2793,7 @@ class DownloadConversion:
         An error is a rare occurance now thanks to the update in v0.7.6 BETA.
         """
         global max_downloads
-        global floatnum, part_type, _url
+        global floatnum, part_type, _url, _url_holder
         floatnum = "3.0"
         part_type = "-- VIDEO --"
         _url = url_box.get("1.0", END).split(sep="\n") # split() will seperate all strings containing a space or new line

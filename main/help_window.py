@@ -3,6 +3,7 @@ import webbrowser
 from tkinter import *
 from tkinter import ttk
 from tkinter.font import *
+
 count = 1
 def reset(win):
     global count
