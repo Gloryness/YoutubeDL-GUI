@@ -13,6 +13,10 @@
   </p>
 </p>
 
+[![Release](https://img.shields.io/github/v/release/Gloryness/YoutubeDL-GUI)](https://github.com/Gloryness/YoutubeDL-GUI/releases)
+[![Downloads](https://img.shields.io/github/downloads/Gloryness/YoutubeDL-GUI/total)](https://github.com/Gloryness/YoutubeDL-GUI/releases)
+[![Donate](https://img.shields.io/badge/donate-%C2%A3%C2%A3%C2%A3-sucess.svg)](https://streamlabs.com/gloryness/tip)
+
 ## About the Project
 
 
