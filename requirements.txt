@@ -1,7 +1,7 @@
 youtube-dl
 selenium
 requests
-Pillow (Python Image Libary)
 cryptography
+Pillow (Python Image Libary)
 ------------------------------------
 ffmpeg is needed in command line.

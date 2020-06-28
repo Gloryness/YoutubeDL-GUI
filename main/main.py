@@ -30,7 +30,7 @@ import threading
 import logging
 import webbrowser
 
-__version__ = '1.0.81'
+__version__ = '1.0.9'
 
 ## Main Dictionary
 video_ops = {
@@ -1701,35 +1701,45 @@ class DownloadOptionWindow(object):
                 video_ops.pop('max_filesize')
                 self.input_entry2.delete(0, END)
 
-        if len(str(self.var_11.get())) <= 0:
-            video_ops.update(playliststart=None)
-            video_ops.pop('playliststart')
-            self.input_entry3.delete(0, END)
-        else:
-            if str(self.var_11.get()).isnumeric():
-                video_ops.update(playliststart=self.var_11.get())
-            else:
-                if self.count == 1:
-                    messagebox.showerror("???", "Error on Start Playlist section.\nYou can only use integers.", parent=self.download_win)
-                    self.count += 1
+        try:
+            if len(str(self.var_11.get())) <= 0:
                 video_ops.update(playliststart=None)
                 video_ops.pop('playliststart')
                 self.input_entry3.delete(0, END)
-
-        if len(str(self.var_12.get())) <= 0:
-            video_ops.update(playlistend=None)
-            video_ops.pop('playlistend')
-            self.input_entry4.delete(0, END)
-        else:
-            if str(self.var_12.get()).isnumeric():
-                video_ops.update(playlistend=self.var_12.get())
             else:
-                if self.count == 1:
-                    messagebox.showerror("???", "Error on End Playlist section.\nYou can only use integers.", parent=self.download_win)
-                    self.count += 1
+                if str(self.var_11.get()).isnumeric():
+                    video_ops.update(playliststart=self.var_11.get())
+                else:
+                    if self.count == 1:
+                        messagebox.showerror("???", "Error on Start Playlist section.\nYou can only use integers.", parent=self.download_win)
+                        self.count += 1
+                    video_ops.update(playliststart=None)
+                    video_ops.pop('playliststart')
+                    self.input_entry3.delete(0, END)
+        except TclError:
+            video_ops.update(playliststart=None)
+            video_ops.pop('playliststart')
+            self.input_entry3.delete(0, END)
+
+        try:
+            if len(str(self.var_12.get())) <= 0:
                 video_ops.update(playlistend=None)
                 video_ops.pop('playlistend')
                 self.input_entry4.delete(0, END)
+            else:
+                if str(self.var_12.get()).isnumeric():
+                    video_ops.update(playlistend=self.var_12.get())
+                else:
+                    if self.count == 1:
+                        messagebox.showerror("???", "Error on End Playlist section.\nYou can only use integers.", parent=self.download_win)
+                        self.count += 1
+                    video_ops.update(playlistend=None)
+                    video_ops.pop('playlistend')
+                    self.input_entry4.delete(0, END)
+        except TclError:
+            video_ops.update(playlistend=None)
+            video_ops.pop('playlistend')
+            self.input_entry4.delete(0, END)
 
         if self.var_13.get() == '4.2M':
             video_ops.update(ratelimit=None)
@@ -2664,7 +2674,6 @@ class DownloadConversion:
         self._index = 0
         self.win_count = 1
         self.terminate_count = 1
-        self._driver = None
         self._downloadError = yt.utils.DownloadError
         self._FFmpegPostProcessorError = postprocessor.ffmpeg.FFmpegPostProcessorError
 
@@ -2780,7 +2789,7 @@ class DownloadConversion:
             thread.wait(1.5)
         if d['status'] == 'downloading':
             t.delete_lines()
-            print('\nFILE: %s' % d['filename'], 'SPEED: %s' % d['_speed_str'], 'PERCENT: %s' % d['_percent_str'], 'ETA: %s' % d['_eta_str'], sep='\n')
+            print('\nFILE: %s' % title1, 'SPEED: %s' % d['_speed_str'], 'PERCENT: %s' % d['_percent_str'], 'ETA: %s' % d['_eta_str'], sep='\n')
             '''
             _speed_str
             _percent_str -- these are all the more accurate-like strings rather than just "eta". They give more information, and are also located in source code.
@@ -2793,7 +2802,7 @@ class DownloadConversion:
         An error is a rare occurance now thanks to the update in v0.7.6 BETA.
         """
         global max_downloads
-        global floatnum, part_type, _url, _url_holder
+        global floatnum, part_type, _url, _url_holder, title1
         floatnum = "3.0"
         part_type = "-- VIDEO --"
         _url = url_box.get("1.0", END).split(sep="\n") # split() will seperate all strings containing a space or new line
@@ -2842,6 +2851,12 @@ class DownloadConversion:
                 elif len(_url) == 1:
                     self.kill_button()
                     _url_holder = next(_url_iterator)
+                    ydler = yt.YoutubeDL({'no_color': True, 'quiet': True})
+                    sys.stderr = sys.__stderr__
+                    sys.stdout = sys.__stdout__
+                    extract = ydler.extract_info(_url_holder, download=False)
+                    title1 = extract['title']
+                    download_call.undo()
                     ydl.download([_url_holder])
                     if ext_btn_var.get() == "MP4" \
                             or ext_btn_var.get() == "WEBM"\
@@ -2936,6 +2951,12 @@ class DownloadConversion:
                                 print("Download [{}] starting\n".format(index))
                             thread = threading.Event()
                             thread.wait(wait_time)
+                            ydler = yt.YoutubeDL({'no_color': True, 'quiet': True})
+                            sys.stderr = sys.__stderr__
+                            sys.stdout = sys.__stdout__
+                            extract = ydler.extract_info(_url_holder, download=False)
+                            title1 = extract['title']
+                            download_call.undo()
                             ydl.download([_url_holder])
                             if ext_btn_var.get() == "MP4"\
                                 or ext_btn_var.get() == "WEBM"\
@@ -3040,7 +3061,12 @@ class DownloadConversion:
                 try:
                     if len(_url) == 1:
                         self.kill_button()
-                        _url_holder = next(_url_iterator)
+                        ydler = yt.YoutubeDL({'no_color': True, 'quiet': True})
+                        sys.stderr = sys.__stderr__
+                        sys.stdout = sys.__stdout__
+                        extract = ydler.extract_info(_url_holder, download=False)
+                        title1 = extract['title']
+                        download_call.undo()
                         ydl.download([_url_holder])
                         if ext_btn_var.get() == "MP4" \
                                 or ext_btn_var.get() == "WEBM"\
@@ -3127,7 +3153,6 @@ class DownloadConversion:
                                 print("[info] Maximum number of downloaded files reached!\n\n")
                                 self.quit_win()
                             else:
-                                _url_holder = next(_url_iterator)
                                 if index >= 1:
                                     self._delete_lines()
                                     print("\n\nDownload [{}] starting\n".format(index))
@@ -3135,6 +3160,12 @@ class DownloadConversion:
                                     print("Download [{}] starting\n".format(index))
                                 thread = threading.Event()
                                 thread.wait(wait_time)
+                                ydler = yt.YoutubeDL({'no_color': True, 'quiet': True})
+                                sys.stderr = sys.__stderr__
+                                sys.stdout = sys.__stdout__
+                                extract = ydler.extract_info(_url_holder, download=False)
+                                title1 = extract['title']
+                                download_call.undo()
                                 ydl.download([_url_holder])
                                 if ext_btn_var.get() == "MP4"\
                                     or ext_btn_var.get() == "WEBM"\
@@ -3208,6 +3239,7 @@ class DownloadConversion:
                                 print("\nDownload [{}] completed\n".format(index))
                                 thread = threading.Event()
                                 thread.wait(0.5)
+                                _url_holder = next(_url_iterator)
                                 if quality_btn_var.get() != "NONE" \
                                     and audio_btn_var.get() != "NONE":
                                         part_type = '-- VIDEO --'
@@ -3243,7 +3275,7 @@ class DownloadConversion:
                     print("\nDownload COMPLETE!\n")
                     self.quit_win()
 
-    def open_selenium(self):
+    def open_sel_gui(self):
         """
         A fun feature to use when your browsing youtube or other sites.
         """
@@ -3284,57 +3316,60 @@ class DownloadConversion:
             add_label(self.selenium_win, "Open = Open Selenium.", '#cbdbfc', fg="#80200f", x=1, y=200)
             add_label(self.selenium_win, "Close - Close down this window.", '#cbdbfc', fg="#80200f", x=1, y=220)
             def open_selenium_thread():
-                def open_selenium_function():
+                def open_selenium():
                     try:
+                        global driver
                         open_sel.configure(state=DISABLED)
                         if sel_detail['browser'] == 'Firefox':
                             if sel_detail['profile'] != "":
                                 if sel_detail['path'] != "":
                                     self._profile = webdriver.FirefoxProfile(sel_detail['profile'])
-                                    self._driver = webdriver.Firefox(executable_path=PATH, firefox_profile=self._profile)
+                                    driver = webdriver.Firefox(executable_path=PATH, firefox_profile=self._profile)
                                 else:
                                     self._profile = webdriver.FirefoxProfile(sel_detail['profile'])
-                                    self._driver = webdriver.Firefox(firefox_profile=self._profile)
+                                    driver = webdriver.Firefox(firefox_profile=self._profile)
                             else:
                                 if sel_detail['path'] != "":
-                                    self._driver = webdriver.Firefox(executable_path=PATH)
+                                    driver = webdriver.Firefox(executable_path=PATH)
                                 else:
-                                    self._driver = webdriver.Firefox()
+                                    driver = webdriver.Firefox()
                         if sel_detail['browser'] == 'Chrome':
                             if sel_detail['path'] != "":
-                                self._driver = webdriver.Chrome(executable_path=PATH)
+                                driver = webdriver.Chrome(executable_path=PATH)
                             else:
-                                self._driver = webdriver.Chrome()
+                                driver = webdriver.Chrome()
                         if sel_detail['browser'] == 'Safari':
                             if sel_detail['path'] != "":
-                                self._driver = webdriver.Safari(executable_path=PATH)
+                                driver = webdriver.Safari(executable_path=PATH)
                             else:
-                                self._driver = webdriver.Safari()
+                                driver = webdriver.Safari()
                         if sel_detail['browser'] == 'Opera':
                             if sel_detail['path'] != "":
-                                self._driver = webdriver.Opera(executable_path=PATH)
+                                driver = webdriver.Opera(executable_path=PATH)
                             else:
-                                self._driver = webdriver.Opera()
+                                driver = webdriver.Opera()
                         if sel_detail['browser'] == 'Edge':
                             if sel_detail['path'] != "":
-                                self._driver = webdriver.Edge(executable_path=PATH)
+                                driver = webdriver.Edge(executable_path=PATH)
                             else:
-                                self._driver = webdriver.Edge()
+                                driver = webdriver.Edge()
                         if sel_detail['browser'] == 'Internet Explorer':
                             if sel_detail['path'] != "":
-                                self._driver = webdriver.Ie(executable_path=PATH)
+                                driver = webdriver.Ie(executable_path=PATH)
                             else:
-                                self._driver = webdriver.Ie()
-                        self._driver.get(sel_detail['link'])
-                        self._driver.maximize_window()
+                                driver = webdriver.Ie()
+
+                        if sel_detail['link'] != "":
+                            driver.get(sel_detail['link'])
+                        driver.maximize_window()
                     except Exception as exc:
                         logger.exception("ERROR: An error occured while opening selenium: %s" % exc)
-                sel_thread = threading.Timer(0.2, open_selenium_function)
+                sel_thread = threading.Timer(0.2, open_selenium)
                 sel_thread.start()
 
             def execute_urls_function():
                 open_sel.configure(state=NORMAL)
-                download_call.on_get_urls()
+                self.get_urls()
 
             style1.configure('selenium.TButton', width=10)
 
@@ -3349,32 +3384,40 @@ class DownloadConversion:
 
     def get_urls(self):
         try:
+            handle = driver.window_handles[0]
             self._index = 0
-            self._driver.switch_to.window(self._driver.window_handles[self._index])
-            for i in range(len(self._driver.window_handles)):
-                if str(self._driver.current_url).startswith(tuple(all_extractors.pack_extractors)):
-                    url_box.insert("1.0", self._driver.current_url + "\n")
-                    self._index += 1
+            driver.switch_to.window(driver.window_handles[0])
+            for i in range(len(driver.window_handles)):
+                if str(driver.current_url).startswith(tuple(all_extractors.pack_extractors)):
+                    url_box.insert("1.0", driver.current_url + "\n")
                 try:
-                    self._driver.switch_to.window(self._driver.window_handles[self._index])
+                    self._index += 1
+                    driver.switch_to.window(driver.window_handles[self._index])
                 except IndexError:
                     pass
-            self._index = 0
-            self._driver.switch_to.window(self._driver.window_handles[self._index])
-        except AttributeError as exc:
-            url_box.delete("1.0", END)
-            url_box.insert("1.0", "Selenium is not open, therefore no URLS detected.")
-            logger.exception("Not able to detect Selenium. error: %s" % exc)
+            driver.switch_to.window(handle)
 
+            # self._index = 0
+            # self._driver.switch_to.window(self._driver.window_handles[self._index])
+            # for i in range(len(self._driver.window_handles)):
+            #     if str(self._driver.current_url).startswith(tuple(all_extractors.pack_extractors)):
+            #         url_box.insert("1.0", self._driver.current_url + "\n")
+            #         self._index += 1
+            #     try:
+            #         self._driver.switch_to.window(self._driver.window_handles[self._index])
+            #     except IndexError:
+            #         pass
+            # self._index = 0
+            # self._driver.switch_to.window(self._driver.window_handles[self._index])
         except WebDriverException as exc:
             url_box.delete("1.0", END)
             url_box.insert("1.0", "Selenium is not open, therefore no URLS detected.")
-            logger.exception("Selenium was not able to detect any valid URLS. error: %s" % exc)
+            logger.exception("Selenium was not able to detect any valid URLS. error:\n %s" % exc)
 
         except Exception as exc:
             url_box.delete("1.0", END)
             url_box.insert("1.0", "Selenium is not open, therefore no URLS detected.")
-            logger.exception("Selenium was not able to detect any valid URLS. error: %s" % exc)
+            logger.exception("Selenium was not able to detect any valid URLS. error:\n %s" % exc)
 
     # Threading
 
@@ -3391,13 +3434,9 @@ class DownloadConversion:
         download_thread = threading.Thread(target=self.download)
         download_thread.start()
 
-    def on_selenium(self):
-        selenium_thread = threading.Thread(target=self.open_selenium)
+    def on_sel_gui(self):
+        selenium_thread = threading.Thread(target=self.open_sel_gui)
         selenium_thread.start()
-
-    def on_get_urls(self):
-        get_urls_thread = threading.Thread(target=self.get_urls)
-        get_urls_thread.start()
 
 
 class MyLogger:
@@ -3406,7 +3445,10 @@ class MyLogger:
     def debug(msg):
         now = threading.Event()
         now.wait(0.30)
-        print(msg)
+        if msg.__contains__('ETA'):
+            pass
+        else:
+            print(msg)
 
     @staticmethod
     def warning(msg):
@@ -3433,7 +3475,7 @@ download_btn.place(x=435, y=410)
 edit_format = ttk.Button(root, text="    Edit Formats    ", style='some.TButton', state=DISABLED, command=do.edit_format_btns)
 edit_format.place(x=435, y=375)
 
-detect_btn = ttk.Button(root, text="     Detect URLS    ", style='some.TButton', state=DISABLED, command=download_call.on_selenium)
+detect_btn = ttk.Button(root, text="     Detect URLS    ", style='some.TButton', state=DISABLED, command=download_call.on_sel_gui)
 detect_btn.place(x=435, y=340)
 
 clear_btn = ttk.Button(root, text="    Clear    ", style='some.TButton', state=DISABLED, command=do.clear_url_box)
